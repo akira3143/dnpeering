@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { RouterProvider, useRouter } from './router/Router';
 import { ToastProvider } from './components/Toast';
+import { NetworkProvider } from './context/NetworkContext';
 import { PeeringProvider } from './context/PeeringContext';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -61,9 +62,11 @@ export const App: React.FC = () => {
     <ToastProvider>
       <RouterProvider>
         <AuthProvider>
-          <PeeringProvider>
-            <AppContent />
-          </PeeringProvider>
+          <NetworkProvider>
+            <PeeringProvider>
+              <AppContent />
+            </PeeringProvider>
+          </NetworkProvider>
         </AuthProvider>
       </RouterProvider>
     </ToastProvider>

@@ -1,10 +1,11 @@
 import React from 'react';
-import { NETWORK_META, CONTACT_METHODS } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { useToast } from './Toast';
 import { CURRENT_BRAND_LOGO } from '../utils/brandLogo';
 import { ArrowUp, ExternalLink, Send, Mail, MessageSquare, Copy } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const { networkMeta, contacts } = useNetwork();
   const { copyToClipboard } = useToast();
 
   const scrollToTop = () => {
@@ -42,8 +43,8 @@ export const Footer: React.FC = () => {
                 />
               </div>
               <div>
-                <div className="font-bold text-white text-base font-sans">{NETWORK_META.networkName}</div>
-                <div className="text-xs text-cyan-400 font-mono font-semibold">{NETWORK_META.asn}</div>
+                <div className="font-bold text-white text-base font-sans">{networkMeta.networkName}</div>
+                <div className="text-xs text-cyan-400 font-mono font-semibold">{networkMeta.asn}</div>
               </div>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed font-sans">
@@ -61,7 +62,7 @@ export const Footer: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {CONTACT_METHODS.map((item) => (
+              {contacts.map((item) => (
                 <div
                   key={item.platform}
                   className="p-3 rounded-xl bg-black/50 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-2"
@@ -111,9 +112,9 @@ export const Footer: React.FC = () => {
         {/* Middle: Fast Links & Back to Top */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-5 text-xs font-mono">
-            {NETWORK_META.dn42WhoisUrl && (
+            {networkMeta.dn42WhoisUrl && (
               <a
-                href={NETWORK_META.dn42WhoisUrl}
+                href={networkMeta.dn42WhoisUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
@@ -122,9 +123,9 @@ export const Footer: React.FC = () => {
                 <ExternalLink className="w-3 h-3" />
               </a>
             )}
-            {NETWORK_META.lookingGlassUrl && (
+            {networkMeta.lookingGlassUrl && (
               <a
-                href={NETWORK_META.lookingGlassUrl}
+                href={networkMeta.lookingGlassUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
@@ -157,7 +158,7 @@ export const Footer: React.FC = () => {
         {/* Bottom: Copyright */}
         <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-slate-500 text-[11px]">
           <div>
-            &copy; {new Date().getFullYear()} {NETWORK_META.networkName} (Maintained by <span className="text-slate-400 font-semibold">AKIRA</span>). Licensed under{' '}
+            &copy; {new Date().getFullYear()} {networkMeta.networkName} (Maintained by <span className="text-slate-400 font-semibold">AKIRA</span>). Licensed under{' '}
             <a
               href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
               target="_blank"

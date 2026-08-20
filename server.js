@@ -19,6 +19,7 @@ import {
   handleAuthMe,
   handlePeerStatus,
   handleLookingGlassQuery,
+  handleGetNetworkMeta,
 } from './server/apiHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -184,7 +185,13 @@ const server = http.createServer(async (req, res) => {
     return sendJson(result.status, result.data);
   }
 
-  // 16. Health check route
+  // 16. API Route: GET /api/network-meta (Dynamic Unified Config)
+  if (url.pathname === '/api/network-meta' && req.method === 'GET') {
+    const result = handleGetNetworkMeta();
+    return sendJson(result.status, result.data);
+  }
+
+  // 17. Health check route
   if (url.pathname === '/health' || url.pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'healthy', time: new Date().toISOString() }));

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { NETWORK_NODES, NETWORK_META } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
 import {
@@ -32,10 +32,11 @@ interface LgQueryResponse {
 }
 
 export const LookingGlass: React.FC = () => {
+  const { nodes, networkMeta } = useNetwork();
   const { user } = useAuth();
   const { showToast, copyToClipboard } = useToast();
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string>(NETWORK_NODES[0]?.id || 'jp07');
+  const [selectedNodeId, setSelectedNodeId] = useState<string>(nodes[0]?.id || 'jp07');
   const [commandType, setCommandType] = useState<LgCommandType>('route');
   const [targetInput, setTargetInput] = useState<string>('172.20.0.53');
   const [pingCount, setPingCount] = useState<number>(4);
@@ -44,8 +45,8 @@ export const LookingGlass: React.FC = () => {
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const activeNode = useMemo(() => {
-    return NETWORK_NODES.find((n) => n.id === selectedNodeId) || NETWORK_NODES[0];
-  }, [selectedNodeId]);
+    return nodes.find((n) => n.id === selectedNodeId) || nodes[0];
+  }, [nodes, selectedNodeId]);
 
   // Preset target list
   const presetTargets = useMemo(() => {
@@ -117,7 +118,7 @@ export const LookingGlass: React.FC = () => {
   useEffect(() => {
     const handleCustomTrigger = (e: CustomEvent<{ nodeId?: string; commandType?: LgCommandType; target?: string; autoRun?: boolean }>) => {
       if (!e.detail) return;
-      if (e.detail.nodeId && NETWORK_NODES.some((n) => n.id === e.detail.nodeId)) {
+      if (e.detail.nodeId && nodes.some((n) => n.id === e.detail.nodeId)) {
         setSelectedNodeId(e.detail.nodeId);
       }
       if (e.detail.commandType) {
@@ -234,7 +235,7 @@ export const LookingGlass: React.FC = () => {
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-black/40 px-3.5 py-2 rounded-xl border border-white/10 shrink-0">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
             <span>核心 RR 协议中枢：</span>
-            <span className="text-cyan-300 font-semibold">{NETWORK_META.asn}</span>
+            <span className="text-cyan-300 font-semibold">{networkMeta.asn}</span>
           </div>
         </div>
 
@@ -249,7 +250,7 @@ export const LookingGlass: React.FC = () => {
             </label>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {NETWORK_NODES.map((node) => {
+              {nodes.map((node) => {
                 const isSelected = node.id === selectedNodeId;
                 return (
                   <button

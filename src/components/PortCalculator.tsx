@@ -1,10 +1,12 @@
 import React from 'react';
-import { NETWORK_NODES, MIN_DN42_PORT, MAX_DN42_PORT } from '../data/network';
+import { MIN_DN42_PORT, MAX_DN42_PORT } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { usePeering } from '../context/PeeringContext';
 import { useToast } from './Toast';
 import { Calculator, Copy, ShieldAlert, CheckCircle2, Settings2, AlertOctagon, ChevronDown } from 'lucide-react';
 
 export const PortCalculator: React.FC = () => {
+  const { nodes } = useNetwork();
   const { copyToClipboard } = useToast();
   const {
     peerAsn,
@@ -79,7 +81,7 @@ export const PortCalculator: React.FC = () => {
                         onChange={(e) => setTargetNodeId(e.target.value)}
                         className="w-full pl-3.5 pr-10 py-2 rounded-xl bg-[#080d19] border border-white/15 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none transition-colors cursor-pointer appearance-none"
                       >
-                        {NETWORK_NODES.map((n) => (
+                        {nodes.map((n) => (
                           <option key={n.id} value={n.id} className="bg-[#0c1424] text-slate-100 py-2">
                             {n.code} &middot; {n.city}
                           </option>

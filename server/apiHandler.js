@@ -19,6 +19,7 @@ import {
   verifyPasswordLogin,
 } from './authService.js';
 import { queryPeerBgpStatus, executeLgCommand } from './lookingGlassService.js';
+import { getPublicNetworkData, loadUnifiedConfig } from './configLoader.js';
 
 /**
  * Handles POST /api/submit-peering requests
@@ -382,6 +383,20 @@ export async function handleDeleteSession(body, authHeader) {
       success: true,
       message: `互联会话 ${sessionId} 已成功撤销，服务器端口 ${result.session.hostPort} 已释放。`,
       sessionId,
+    },
+  };
+}
+
+/**
+ * Handles GET /api/network-meta (Dynamic Unified Config)
+ */
+export function handleGetNetworkMeta() {
+  const data = getPublicNetworkData();
+  return {
+    status: 200,
+    data: {
+      success: true,
+      ...data,
     },
   };
 }

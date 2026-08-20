@@ -1,0 +1,110 @@
+# ==============================================================================
+# 🌐 DN42 Peering Portal - 统一全局配置文件 (portal.config.yaml)
+#
+# 💡 使用说明：
+# 1. 复制本文件为 portal.config.yaml 即可在生产环境生效。
+# 2. 修改此文件后，全站（节点卡片、配置生成器、Looking Glass 探针）瞬间热重载生效，
+#    彻底无需重新运行 `npm run build`，也无需修改任何 TypeScript 代码！
+# 3. 亦可在 .env 中指定 REMOTE_CONFIG_URL=https://... 直接外链远程 YAML 自动定时拉取。
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. 自治系统 (AS) 基础元数据
+# ------------------------------------------------------------------------------
+network:
+  asn: "AS4242421337"                  # 你的 DN42 自治系统 ASN (如 AS4242423143)
+  network_name: "Example DN42 Network" # 门户品牌名称
+  maintainer: "EXAMPLE-MNT"            # DN42 WHOIS Maintainer 对象
+  ipv4_pool: "172.20.0.0/24"           # 你的 IPv4 广播网段
+  ipv6_pool: "fd00:4242:1337::/48"     # 你的 IPv6 ULA 广播网段
+  routing_policy: "Open for all DN42 participants / MP-BGP (ENH)"
+  bgp_mode: "MP-BGP + Extended Next Hop (ENH)"
+  port_formula: "20000 + (ASN % 10000)"
+
+# ------------------------------------------------------------------------------
+# 2. 全球 PoP 节点列表 (支持随时增减修改，前台秒级呈现)
+# ------------------------------------------------------------------------------
+nodes:
+  - id: "jp07"                         # 节点唯一代号 (纯小写字母数字)
+    code: "JP-1"                       # 前台徽章代号
+    name: "Tokyo 01 (Japan Hub)"       # 节点名称
+    flag: "🇯🇵"                         # 国家/地区国旗 Emoji
+    city: "Tokyo"                      # 所在城市
+    country: "Japan"                   # 所在国家
+    region: "apac"                     # 地区分类: apac (亚太) / na (北美) / eu (欧洲)
+    endpoint: "jp1.example.dn42"       # 节点的 WireGuard 公网域名或公网 IP
+    wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_111111=" # 节点的 WG 公钥
+    ipv4: "172.20.0.1"                 # 节点在隧道内的 IPv4
+    ipv6_ula: "fd00:4242:1337::1"      # 节点在隧道内的 IPv6 ULA
+    ipv6_lla: "fe80::1337"             # 节点链路本地地址 (Link-Local)
+    mtu: 1420                          # WireGuard 推荐 MTU
+    features:                          # 节点特色特性标签
+      - "★ Core Hub"
+      - "MP-BGP"
+      - "ENH"
+      - "Extended Next Hop"
+    notes: "东亚互联核心枢纽，推荐日本、香港、台湾等东亚地区接入。"
+    lg_proxy_url: "http://127.0.0.1:5000" # 该节点 bird-lgproxy 探针直达地址 (用于 Looking Glass)
+
+  - id: "us01"
+    code: "US-1"
+    name: "Silicon Valley 01 (US West)"
+    flag: "🇺🇸"
+    city: "San Jose"
+    country: "United States"
+    region: "na"
+    endpoint: "us1.example.dn42"
+    wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_222222="
+    ipv4: "172.20.0.2"
+    ipv6_ula: "fd00:4242:1337::2"
+    ipv6_lla: "fe80::1337"
+    mtu: 1420
+    features:
+      - "MP-BGP"
+      - "ENH"
+      - "Trans-Pacific"
+    notes: "美洲及美西互联推荐节点，直连跨太平洋骨干。"
+    lg_proxy_url: "http://172.20.14.2:5000"
+
+  - id: "de02"
+    code: "DE-1"
+    name: "Frankfurt 01 (Europe Hub)"
+    flag: "🇩🇪"
+    city: "Frankfurt"
+    country: "Germany"
+    region: "eu"
+    endpoint: "de1.example.dn42"
+    wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_333333="
+    ipv4: "172.20.0.3"
+    ipv6_ula: "fd00:4242:1337::3"
+    ipv6_lla: "fe80::1337"
+    mtu: 1420
+    features:
+      - "MP-BGP"
+      - "ENH"
+      - "DE-CIX Peering"
+    notes: "欧洲地区核心互联节点。"
+    lg_proxy_url: "http://172.20.14.3:5000"
+
+# ------------------------------------------------------------------------------
+# 3. 前台公开联络方式矩阵
+# ------------------------------------------------------------------------------
+contacts:
+  - platform: "Telegram"
+    handle: "@example_dn42"
+    link: "https://t.me/example_dn42"
+    type: "telegram"
+    response_time: "< 2 小时 (推荐)"
+    preferred: true
+
+  - platform: "Email"
+    handle: "dn42@example.com"
+    link: "mailto:dn42@example.com"
+    type: "email"
+    response_time: "< 12 小时"
+
+# ------------------------------------------------------------------------------
+# 4. 服务端基础参数 (可选，留空则自动读取 .env)
+# ------------------------------------------------------------------------------
+server:
+  port: 3143

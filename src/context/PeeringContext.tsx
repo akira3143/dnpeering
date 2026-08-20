@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import {
-  NETWORK_NODES,
-  resolveHostListenPort,
-  calculatePeerListenPort,
-  type PortResolutionResult,
-} from '../data/network';
+import type { PortResolutionResult } from '../data/network';
 import type { NodeInfo } from '../types/network';
+import { useNetwork } from './NetworkContext';
 import { useAuth, type AuthenticatedUser } from './AuthContext';
 
 interface PeeringContextType {
@@ -62,10 +58,12 @@ const PeeringContext = createContext<PeeringContextType | undefined>(undefined);
 
 export const PeeringProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const { nodes, resolveHostPort, calculateClientPort } = useNetwork();
 
-  const [peerAsn, setPeerAsn] = useState<string>(() => user?.cleanAsn || '');
+  // Form states
+  const [peerAsn, setPeerAsn] = useState<string>('');
   const [peerName, setPeerName] = useState<string>('');
-  const [targetNodeId, setTargetNodeId] = useState<string>('jp07');
+  const [targetNodeId, setTargetNodeId] = useState<string>(nodes[0]?.id || 'jp07');
   const [peerEndpointHost, setPeerEndpointHost] = useState<string>('');
   const [peerWgPubKey, setPeerWgPubKey] = useState<string>('');
   const [peerIpv6LLA, setPeerIpv6LLA] = useState<string>('');
@@ -73,23 +71,31 @@ export const PeeringProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [peerIpv4, setPeerIpv4] = useState<string>('');
   const [bgpMode, setBgpMode] = useState<'mpbgp_enh' | 'dual_stack' | 'ipv6_only'>('mpbgp_enh');
   const [mtu, setMtu] = useState<number>(1420);
-  const [userNote, setUserNote] = useState<string>('你好！我在 DN42 上看到了 AkiLab 的节点，希望能建立 BGP 对等互联。期待你的回复！');
+  const [userNote, setUserNote] = useState<string>('');
 
+  // Custom port states
   const [customHostPort, setCustomHostPort] = useState<string>('');
   const [isCustomPortExpanded, setIsCustomPortExpanded] = useState<boolean>(false);
   const [usePeerFallbackPort, setUsePeerFallbackPort] = useState<boolean>(false);
 
-  // Auto-sync ASN when user logs in
+  // Sync initial target node if nodes load dynamically
   useEffect(() => {
-    if (user?.cleanAsn && !peerAsn) {
+    if (nodes.length > 0 && !nodes.some((n) => n.id === targetNodeId)) {
+      setTargetNodeId(nodes[0].id);
+    }
+  }, [nodes, targetNodeId]);
+
+  // Clean ASN (digits only)
+  const cleanAsn = useMemo(() => {
+    return peerAsn.replace(/\D/g, '');
+  }, [peerAsn]);
+
+  // Automatic Authenticated Identity Binding
+  useEffect(() => {
+    if (isAuthenticated && user?.cleanAsn && !peerAsn) {
       setPeerAsn(user.cleanAsn);
     }
-  }, [user]);
-
-  // Clean ASN
-  const cleanAsn = useMemo(() => {
-    return peerAsn.replace(/\D/g, '') || '';
-  }, [peerAsn]);
+  }, [isAuthenticated, user, peerAsn]);
 
   const isVerifiedUser = useMemo(() => {
     return Boolean(isAuthenticated && user?.cleanAsn && cleanAsn && user.cleanAsn === cleanAsn);
@@ -104,18 +110,18 @@ export const PeeringProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Selected Target Node
   const selectedNode = useMemo(() => {
-    return NETWORK_NODES.find((n) => n.id === targetNodeId) || NETWORK_NODES[0];
-  }, [targetNodeId]);
+    return nodes.find((n) => n.id === targetNodeId) || nodes[0];
+  }, [nodes, targetNodeId]);
 
   // Real-time Deterministic Host ListenPort Resolution
   const hostPortInfo = useMemo(() => {
-    return resolveHostListenPort(cleanAsn, targetNodeId, customHostPort);
-  }, [cleanAsn, targetNodeId, customHostPort]);
+    return resolveHostPort(cleanAsn, targetNodeId, customHostPort);
+  }, [cleanAsn, targetNodeId, customHostPort, resolveHostPort]);
 
   // Client ListenPort (Automatic per target node / fallback)
   const peerPort = useMemo(() => {
-    return calculatePeerListenPort(targetNodeId, usePeerFallbackPort);
-  }, [targetNodeId, usePeerFallbackPort]);
+    return calculateClientPort(targetNodeId, usePeerFallbackPort);
+  }, [targetNodeId, usePeerFallbackPort, calculateClientPort]);
 
   const finalHostPort = hostPortInfo.port;
   const finalClientPort = peerPort;

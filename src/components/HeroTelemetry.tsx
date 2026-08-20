@@ -1,9 +1,10 @@
 import React from 'react';
-import { NETWORK_META } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { useToast } from './Toast';
 import { Server, Copy, ArrowRight, ExternalLink, HeartHandshake } from 'lucide-react';
 
 export const HeroTelemetry: React.FC = () => {
+  const { networkMeta } = useNetwork();
   const { copyToClipboard } = useToast();
 
   return (
@@ -29,7 +30,7 @@ export const HeroTelemetry: React.FC = () => {
 
           {/* Sincere, Low-profile & Humorous Description */}
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed font-sans">
-            AkiLab 是由 <strong className="text-white font-semibold">AKIRA</strong> 维护的个人非盈利 DN42 实验网络（<code className="font-mono text-cyan-300 font-bold">{NETWORK_META.asn}</code>），由几台廉价服务器东拼西凑而成。纯粹用于学习与日常折腾（并保留因欠费或维护随时跑路的权利 🤪）。非常欢迎各位同好建立 BGP Peer 互联，一起愉快炸网与交流探索！
+            AkiLab 是由 <strong className="text-white font-semibold">AKIRA</strong> 维护的个人非盈利 DN42 实验网络（<code className="font-mono text-cyan-300 font-bold">{networkMeta.asn}</code>），由几台廉价服务器东拼西凑而成。纯粹用于学习与日常折腾（并保留因欠费或维护随时跑路的权利 🤪）。非常欢迎各位同好建立 BGP Peer 互联，一起愉快炸网与交流探索！
           </p>
 
           {/* Action Link */}
@@ -42,9 +43,9 @@ export const HeroTelemetry: React.FC = () => {
               <span>浏览可用节点列表</span>
               <ArrowRight className="w-4 h-4" />
             </a>
-            {NETWORK_META.lookingGlassUrl && (
+            {networkMeta.lookingGlassUrl && (
               <a
-                href={NETWORK_META.lookingGlassUrl}
+                href={networkMeta.lookingGlassUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs sm:text-sm font-medium transition-all inline-flex items-center gap-1.5"
@@ -63,10 +64,10 @@ export const HeroTelemetry: React.FC = () => {
           <div className="glass-panel p-4 flex items-center justify-between border-t-2 border-t-cyan-400 shadow-lg">
             <div>
               <span className="text-[11px] font-sans text-slate-400">自治系统编号 (ASN)</span>
-              <div className="text-base font-mono font-bold text-white mt-0.5">{NETWORK_META.asn}</div>
+              <div className="text-base font-mono font-bold text-white mt-0.5">{networkMeta.asn}</div>
             </div>
             <button
-              onClick={() => copyToClipboard(NETWORK_META.asn, 'ASN')}
+              onClick={() => copyToClipboard(networkMeta.asn, 'ASN')}
               className="p-2 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 transition-colors cursor-pointer"
               title="复制 ASN"
             >
@@ -78,10 +79,10 @@ export const HeroTelemetry: React.FC = () => {
           <div className="glass-panel p-4 flex items-center justify-between border-t-2 border-t-emerald-400 shadow-lg">
             <div>
               <span className="text-[11px] font-sans text-slate-400">IPv4 广播地址池</span>
-              <div className="text-base font-mono font-bold text-emerald-400 mt-0.5">{NETWORK_META.ipv4Pool}</div>
+              <div className="text-base font-mono font-bold text-emerald-400 mt-0.5">{networkMeta.ipv4Pool}</div>
             </div>
             <button
-              onClick={() => copyToClipboard(NETWORK_META.ipv4Pool, 'IPv4')}
+              onClick={() => copyToClipboard(networkMeta.ipv4Pool, 'IPv4')}
               className="p-2 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 transition-colors cursor-pointer"
               title="复制 IPv4"
             >
@@ -93,10 +94,10 @@ export const HeroTelemetry: React.FC = () => {
           <div className="glass-panel p-4 flex items-center justify-between border-t-2 border-t-purple-400 shadow-lg">
             <div>
               <span className="text-[11px] font-sans text-slate-400">IPv6 ULA 地址池</span>
-              <div className="text-base font-mono font-bold text-purple-400 mt-0.5">{NETWORK_META.ipv6Pool}</div>
+              <div className="text-base font-mono font-bold text-purple-400 mt-0.5">{networkMeta.ipv6Pool}</div>
             </div>
             <button
-              onClick={() => copyToClipboard(NETWORK_META.ipv6Pool, 'IPv6')}
+              onClick={() => copyToClipboard(networkMeta.ipv6Pool, 'IPv6')}
               className="p-2 rounded-lg bg-white/5 hover:bg-purple-500/20 text-slate-400 hover:text-purple-300 transition-colors cursor-pointer"
               title="复制 IPv6"
             >

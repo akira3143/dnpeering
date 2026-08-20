@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../router/Router';
-import { NETWORK_META } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { useToast } from './Toast';
 import { useAuth } from '../context/AuthContext';
 import { CURRENT_BRAND_LOGO } from '../utils/brandLogo';
@@ -18,6 +18,7 @@ import {
 
 export const Navbar: React.FC = () => {
   const { path, navigate } = useRouter();
+  const { networkMeta } = useNetwork();
   const { copyToClipboard } = useToast();
   const {
     user,
@@ -80,7 +81,7 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-base tracking-tight text-white font-sans leading-tight">
-                {NETWORK_META.networkName}
+                {networkMeta.networkName}
               </span>
               <span className="text-[10px] uppercase font-mono text-cyan-400/80 tracking-widest">
                 DN42 Autonomous System
@@ -90,12 +91,12 @@ export const Navbar: React.FC = () => {
 
           {/* ASN Copy Badge */}
           <button
-            onClick={() => copyToClipboard(NETWORK_META.asn, 'ASN')}
+            onClick={() => copyToClipboard(networkMeta.asn, 'ASN')}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title="点击复制 ASN"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
-            <span>{NETWORK_META.asn}</span>
+            <span>{networkMeta.asn}</span>
             <Copy className="w-3 h-3 text-cyan-400/70" />
           </button>
         </div>

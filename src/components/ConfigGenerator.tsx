@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
-import { NETWORK_META, NETWORK_NODES } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import { usePeering } from '../context/PeeringContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
@@ -36,6 +36,7 @@ import {
 
 export const ConfigGenerator: React.FC = () => {
   const { copyToClipboard, showToast } = useToast();
+  const { networkMeta, nodes } = useNetwork();
   const {
     peerAsn,
     setPeerAsn,
@@ -141,7 +142,7 @@ PersistentKeepalive = 25
 
     if (bgpMode === 'mpbgp_enh') {
       return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug} from dnpeers {
-    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${NETWORK_META.asnNumber};
+    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
 
     ipv4 {
         extended next hop on;
@@ -157,7 +158,7 @@ PersistentKeepalive = 25
 `.trim();
     } else if (bgpMode === 'dual_stack') {
       return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug}_v6 from dnpeers {
-    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${NETWORK_META.asnNumber};
+    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
     ipv6 {
         import filter dn42_import_filter;
         export filter dn42_export_filter;
@@ -165,7 +166,7 @@ PersistentKeepalive = 25
 }
 
 protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
-    neighbor ${selectedNode.tunnelIpv4 || '172.20.0.x'} as ${NETWORK_META.asnNumber};
+    neighbor ${selectedNode.tunnelIpv4 || '172.20.0.x'} as ${networkMeta.asnNumber};
     ipv4 {
         import filter dn42_import_filter;
         export filter dn42_export_filter;
@@ -174,7 +175,7 @@ protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
 `.trim();
     } else {
       return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug}_v6 from dnpeers {
-    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${NETWORK_META.asnNumber};
+    neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
     ipv6 {
         import filter dn42_import_filter;
         export filter dn42_export_filter;
@@ -182,7 +183,7 @@ protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
 }
 `.trim();
     }
-  }, [bgpMode, nodeSlug, selectedNode, clientIfaceName]);
+  }, [bgpMode, nodeSlug, selectedNode, clientIfaceName, networkMeta.asnNumber]);
 
   // 3. Immutable Core Parameters Block for Markdown
   const immutableParamsBlock = useMemo(() => {
@@ -574,7 +575,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                       onChange={(e) => setTargetNodeId(e.target.value)}
                       className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[#040813] border border-white/15 text-slate-100 text-xs font-mono focus:border-cyan-400 focus:outline-none transition-colors cursor-pointer appearance-none shadow-inner"
                     >
-                      {NETWORK_NODES.map((node) => (
+                      {nodes.map((node) => (
                         <option key={node.id} value={node.id} className="bg-[#0c1424] text-slate-100 py-2">
                           {node.flag} {node.code} &middot; {node.name} ({node.city})
                         </option>

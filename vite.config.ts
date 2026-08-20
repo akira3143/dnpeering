@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 // @ts-ignore
-import { handlePeeringSubmission, handleGetOccupiedPorts, handleGetSession, handleGetSessionsByAsn, handleDn42Lookup, handleDeleteSession, handleAuthChallenge, handleVerifySsh, handleAuthStatus, handleLoginPassword, handleSetPassword, handleRequestOtp, handleVerifyOtp, handleAuthMe, handlePeerStatus, handleLookingGlassQuery } from './server/apiHandler.js';
+import { handlePeeringSubmission, handleGetOccupiedPorts, handleGetSession, handleGetSessionsByAsn, handleDn42Lookup, handleDeleteSession, handleAuthChallenge, handleVerifySsh, handleAuthStatus, handleLoginPassword, handleSetPassword, handleRequestOtp, handleVerifyOtp, handleAuthMe, handlePeerStatus, handleLookingGlassQuery, handleGetNetworkMeta } from './server/apiHandler.js';
 
 function telegramApiPlugin(): Plugin {
   const handler = async (req: any, res: any, next: any) => {
@@ -139,6 +139,12 @@ function telegramApiPlugin(): Plugin {
     if (url.pathname === '/api/looking-glass/query' && req.method === 'POST') {
       const parsed = await parseBody();
       const result = await handleLookingGlassQuery(parsed);
+      return sendJson(result.status, result.data);
+    }
+
+    // 16. GET /api/network-meta (Dynamic Unified Config)
+    if (url.pathname === '/api/network-meta' && req.method === 'GET') {
+      const result = handleGetNetworkMeta();
       return sendJson(result.status, result.data);
     }
 

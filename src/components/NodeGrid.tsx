@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { NETWORK_NODES } from '../data/network';
+import { useNetwork } from '../context/NetworkContext';
 import type { RegionType } from '../types/network';
 import { NodeCard } from './NodeCard';
 import { useToast } from './Toast';
@@ -10,21 +10,22 @@ interface NodeGridProps {
 }
 
 export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
+  const { nodes } = useNetwork();
   const [selectedRegion, setSelectedRegion] = useState<RegionType>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const { copyToClipboard } = useToast();
 
   const filteredNodes = useMemo(() => {
-    return NETWORK_NODES.filter((node) => {
+    return nodes.filter((node) => {
       return selectedRegion === 'all' || node.region === selectedRegion;
     });
-  }, [selectedRegion]);
+  }, [nodes, selectedRegion]);
 
   const allRegionTabs: { id: RegionType; label: string; count: number }[] = [
-    { id: 'all', label: '全部可用节点', count: NETWORK_NODES.length },
-    { id: 'apac', label: '亚太地区 (APAC)', count: NETWORK_NODES.filter((n) => n.region === 'apac').length },
-    { id: 'na', label: '北美地区 (NA)', count: NETWORK_NODES.filter((n) => n.region === 'na').length },
-    { id: 'eu', label: '欧洲地区 (EU)', count: NETWORK_NODES.filter((n) => n.region === 'eu').length },
+    { id: 'all', label: '全部可用节点', count: nodes.length },
+    { id: 'apac', label: '亚太地区 (APAC)', count: nodes.filter((n) => n.region === 'apac').length },
+    { id: 'na', label: '北美地区 (NA)', count: nodes.filter((n) => n.region === 'na').length },
+    { id: 'eu', label: '欧洲地区 (EU)', count: nodes.filter((n) => n.region === 'eu').length },
   ];
 
   const regionTabs = allRegionTabs.filter((tab) => tab.id === 'all' || tab.count > 0);

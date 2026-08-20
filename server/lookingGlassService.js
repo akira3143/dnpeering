@@ -5,6 +5,7 @@
  */
 
 import './env.js';
+import { getActiveConfig } from './configLoader.js';
 
 // Parse per-node endpoints from environment
 function getNodeEndpointsMap() {
@@ -41,8 +42,21 @@ export function sanitizeTarget(rawInput) {
  * Resolves endpoint URL for a given node ID
  */
 function getEndpointForNode(nodeId) {
-  const map = getNodeEndpointsMap();
   const cleanId = String(nodeId || 'jp07').toLowerCase().trim();
+
+  // 1. Check unified config nodes
+  try {
+    const activeCfg = getActiveConfig();
+    if (activeCfg && Array.isArray(activeCfg.nodes)) {
+      const matched = activeCfg.nodes.find((n) => n.id === cleanId);
+      if (matched?.lgProxyUrl) {
+        return matched.lgProxyUrl;
+      }
+    }
+  } catch {}
+
+  // 2. Check environment map
+  const map = getNodeEndpointsMap();
   return map[cleanId] || map['jp07'] || 'http://127.0.0.1:5000';
 }
 

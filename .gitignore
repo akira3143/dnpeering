@@ -27,7 +27,10 @@ dist-ssr
 server/data/*.json
 server/data/registry/
 
-# Environment secrets
+# Environment secrets & unified config
 .env
 .env.local
 .env.production
+portal.config.yaml
+portal.config.json
+!portal.config.example.yaml

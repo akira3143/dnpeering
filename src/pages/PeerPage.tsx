@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useRouter } from '../router/Router';
 import { usePeering } from '../context/PeeringContext';
+import { useNetwork } from '../context/NetworkContext';
 import { useAuth } from '../context/AuthContext';
-import { NETWORK_NODES } from '../data/network';
 import { ConfigGenerator } from '../components/ConfigGenerator';
 import {
   ArrowLeft,
@@ -17,15 +17,16 @@ import {
 
 export const PeerPage: React.FC = () => {
   const { navigate, queryParams } = useRouter();
+  const { nodes } = useNetwork();
   const { setTargetNodeId, selectedNode, finalHostPort, finalClientPort } = usePeering();
   const { isAuthenticated, setIsAuthModalOpen } = useAuth();
 
   // If URL has ?node=xxx, sync it with context
   useEffect(() => {
-    if (queryParams.node && NETWORK_NODES.some((n) => n.id === queryParams.node)) {
+    if (queryParams.node && nodes.some((n) => n.id === queryParams.node)) {
       setTargetNodeId(queryParams.node);
     }
-  }, [queryParams.node, setTargetNodeId]);
+  }, [queryParams.node, nodes, setTargetNodeId]);
 
   // Support ESC key to return to home page smoothly
   useEffect(() => {
