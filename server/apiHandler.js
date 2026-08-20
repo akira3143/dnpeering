@@ -1,0 +1,387 @@
+import { sendPeeringNotification, sendDeleteNotification } from './telegramBot.js';
+import { checkRateLimit, recordSubmission } from './rateLimiter.js';
+import {
+  savePeeringSession,
+  getOccupiedPortsForNode,
+  getSessionById,
+  getSessionsByAsn,
+  deleteSession,
+} from './sessionManager.js';
+import { getAsnIdentity } from './registrySync.js';
+import {
+  createAuthChallenge,
+  verifySshSignature,
+  requestEmailOtp,
+  verifyEmailOtp,
+  verifyJwt,
+  getAsnAuthStatus,
+  setPasswordForAsn,
+  verifyPasswordLogin,
+} from './authService.js';
+import { queryPeerBgpStatus, executeLgCommand } from './lookingGlassService.js';
+
+/**
+ * Handles POST /api/submit-peering requests
+ * @param {Object} body - Parsed JSON body
+ * @param {string} clientIp - Client IP address
+ * @returns {Promise<{status: number, data: Object}>}
+ */
+export async function handlePeeringSubmission(body, clientIp, authHeader) {
+  if (!body || typeof body !== 'object') {
+    return {
+      status: 400,
+      data: { success: false, error: '无效的请求载荷 (Invalid payload)' },
+    };
+  }
+
+  const { peerAsn, peerWgPubKey, peerIpv6LLA } = body;
+
+  // Basic validation
+  if (!peerAsn || !String(peerAsn).trim()) {
+    return {
+      status: 400,
+      data: { success: false, error: '请填写你的 ASN' },
+    };
+  }
+
+  const cleanAsn = String(peerAsn || '').replace(/\D/g, '');
+
+  // 🔒 Strict Authentication Guard: Must be authenticated via JWT matching the submitted ASN
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const authUser = verifyJwt(token);
+
+  if (!authUser || (authUser.cleanAsn !== cleanAsn && authUser.asn !== `AS${cleanAsn}`)) {
+    return {
+      status: 401,
+      data: {
+        success: false,
+        error: '安全拦截：提交对等互联申请必须先完成 DN42 Registry 身份验真或密码登录！',
+      },
+    };
+  }
+
+  if (!peerWgPubKey || !String(peerWgPubKey).trim()) {
+    return {
+      status: 400,
+      data: { success: false, error: '请填写你的 WireGuard 公钥' },
+    };
+  }
+
+  if (!peerIpv6LLA || !String(peerIpv6LLA).trim()) {
+    return {
+      status: 400,
+      data: { success: false, error: '请填写你的 IPv6 Link-Local (LLA) 地址' },
+    };
+  }
+
+  // Rate Limiting Check
+  const rateLimitResult = checkRateLimit(clientIp, peerAsn);
+  if (!rateLimitResult.allowed) {
+    return {
+      status: 429,
+      data: {
+        success: false,
+        error: rateLimitResult.message,
+        retryAfter: rateLimitResult.retryAfter,
+      },
+    };
+  }
+
+  // 1. Save or Update Peering Session with Atomic Port Ledger & Diff Tracking
+  const { session, isNew, diffs, previousVersion } = savePeeringSession({ ...body, authUser }, clientIp);
+
+  // 2. Forward to Telegram Bot with Session & Diff context
+  const payload = {
+    ...body,
+    clientIp,
+  };
+
+  const botResult = await sendPeeringNotification(payload, {
+    session,
+    isNew,
+    diffs,
+    previousVersion,
+    authUser,
+  });
+
+  if (!botResult.success) {
+    return {
+      status: 500,
+      data: {
+        success: false,
+        error: botResult.error || '推送通知到管理员 Telegram 失败，请稍后重试',
+      },
+    };
+  }
+
+  // Record successful submission for rate limiting
+  recordSubmission(clientIp, peerAsn);
+
+  return {
+    status: 200,
+    data: {
+      success: true,
+      message: isNew
+        ? '🎉 对等互联申请已成功投递至 AkiLab 管理员！'
+        : `🔄 对等互联申请已更新至版本 v${session.version}，变更已实时同步给管理员！`,
+      sessionId: session.id,
+      version: session.version,
+      isNew,
+      allocatedPort: session.hostPort,
+      messageId: botResult.messageId,
+    },
+  };
+}
+
+/**
+ * Handles GET /api/node-ports?nodeId=jp07
+ */
+export function handleGetOccupiedPorts(nodeId) {
+  const ports = getOccupiedPortsForNode(nodeId || 'jp07');
+  return {
+    status: 200,
+    data: { success: true, nodeId, occupiedPorts: ports },
+  };
+}
+
+/**
+ * Handles GET /api/session?id=PEER-JP07-1234-A8F2
+ */
+export function handleGetSession(sessionId, authHeader) {
+  if (!sessionId) {
+    return { status: 400, data: { success: false, error: '缺少 sessionId' } };
+  }
+  const session = getSessionById(sessionId);
+  if (!session) {
+    return { status: 404, data: { success: false, error: '未找到该互联会话' } };
+  }
+  // Auth check: verify requester owns this session or is admin
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const user = verifyJwt(token);
+  const isAdmin = user?.isAdmin || user?.cleanAsn === '4343439696' || user?.username === 'akira';
+  if (!isAdmin && (!user || user.cleanAsn !== session.asn)) {
+    // Return limited info for unauthenticated users
+    return { status: 200, data: { success: true, session: { id: session.id, nodeId: session.nodeId, status: session.status } } };
+  }
+  return { status: 200, data: { success: true, session } };
+}
+
+/**
+ * Handles GET /api/sessions-by-asn?asn=4242421234
+ */
+export function handleGetSessionsByAsn(asn, authHeader) {
+  if (!asn) {
+    return { status: 400, data: { success: false, error: '缺少 ASN' } };
+  }
+  // Auth check: require valid JWT to query sessions
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const user = verifyJwt(token);
+  if (!user) {
+    return { status: 401, data: { success: false, error: '查询互联会话需要先完成身份认证' } };
+  }
+  const cleanAsn = String(asn || '').replace(/\D/g, '');
+  const isAdmin = user.isAdmin || user.cleanAsn === '4343439696' || user.username === 'akira';
+  // Non-admin users can only query their own sessions
+  if (!isAdmin && user.cleanAsn !== cleanAsn) {
+    return { status: 403, data: { success: false, error: '无权查询其他 ASN 的互联会话' } };
+  }
+  const sessions = getSessionsByAsn(asn);
+  return { status: 200, data: { success: true, sessions } };
+}
+
+/**
+ * Handles GET /api/dn42-lookup?asn=4242423143
+ */
+export async function handleDn42Lookup(asn) {
+  const identity = await getAsnIdentity(asn);
+  return {
+    status: 200,
+    data: { success: true, identity },
+  };
+}
+
+/**
+ * Handles POST /api/auth/challenge
+ */
+export async function handleAuthChallenge(body) {
+  const { asn } = body || {};
+  const result = await createAuthChallenge(asn);
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/verify-ssh
+ */
+export async function handleVerifySsh(body) {
+  const { asn, signature, rememberMe } = body || {};
+  const result = await verifySshSignature(asn, signature, Boolean(rememberMe));
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/request-otp
+ */
+export async function handleRequestOtp(body) {
+  const { asn } = body || {};
+  const result = await requestEmailOtp(asn);
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/verify-otp
+ */
+export async function handleVerifyOtp(body) {
+  const { asn, otp } = body || {};
+  const result = await verifyEmailOtp(asn, otp);
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles GET /api/auth/me
+ */
+export function handleAuthMe(authHeader) {
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const user = verifyJwt(token);
+  if (!user) {
+    return { status: 401, data: { success: false, error: '未授权或 Token 已过期' } };
+  }
+  return { status: 200, data: { success: true, user } };
+}
+
+/**
+ * Handles GET /api/peer-status?asn=...&node=...&name=...
+ */
+export async function handlePeerStatus(asn, node, name) {
+  if (!asn) {
+    return { status: 400, data: { success: false, error: '缺少 ASN' } };
+  }
+  const result = await queryPeerBgpStatus(asn, node || 'jp07', name || '');
+  return {
+    status: 200,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/looking-glass/query
+ */
+export async function handleLookingGlassQuery(body) {
+  const { nodeId, commandType, target, options } = body || {};
+  if (!commandType) {
+    return { status: 400, data: { success: false, error: '缺少诊断命令类型 (commandType)' } };
+  }
+
+  const result = await executeLgCommand({
+    nodeId: nodeId || 'jp07',
+    commandType,
+    target: target || '',
+    options: options || {},
+  });
+
+  return {
+    status: 200,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/status
+ */
+export async function handleAuthStatus(body) {
+  const { asn } = body || {};
+  const result = await getAsnAuthStatus(asn);
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/login-password
+ */
+export async function handleLoginPassword(body) {
+  const { asn, password, rememberMe } = body || {};
+  const result = await verifyPasswordLogin(asn, password, Boolean(rememberMe));
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/auth/set-password
+ */
+export async function handleSetPassword(body, authHeader) {
+  const { asn, password } = body || {};
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const user = verifyJwt(token);
+
+  const cleanAsn = String(asn || '').replace(/\D/g, '');
+
+  // Must either have a valid JWT for this ASN, or provide token in body
+  if (!user || (user.cleanAsn !== cleanAsn && user.asn !== `AS${cleanAsn}`)) {
+    return {
+      status: 401,
+      data: { success: false, error: '设置密码需要先完成身份验证授权' },
+    };
+  }
+
+  const result = await setPasswordForAsn(cleanAsn, password);
+  return {
+    status: result.success ? 200 : 400,
+    data: result,
+  };
+}
+
+/**
+ * Handles POST /api/delete-session
+ */
+export async function handleDeleteSession(body, authHeader) {
+  const { sessionId, nodeId } = body || {};
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const user = verifyJwt(token);
+
+  // 🔒 Strict Auth: Must be authenticated to delete sessions
+  if (!user) {
+    return {
+      status: 401,
+      data: { success: false, error: '撤销互联会话必须先完成身份认证登录' },
+    };
+  }
+  const targetAsn = user.cleanAsn;
+
+  const result = deleteSession(sessionId, targetAsn, nodeId);
+
+  if (!result.success) {
+    return {
+      status: 400,
+      data: { success: false, error: result.error || '撤销会话失败' },
+    };
+  }
+
+  // Send asynchronous Telegram alert to admin about session deletion & port release
+  if (result.session && result.session.hostPort) {
+    sendDeleteNotification(result.session).catch(err => console.warn('TG Delete Alert error:', err));
+  }
+
+  return {
+    status: 200,
+    data: {
+      success: true,
+      message: `互联会话 ${sessionId} 已成功撤销，服务器端口 ${result.session.hostPort} 已释放。`,
+      sessionId,
+    },
+  };
+}

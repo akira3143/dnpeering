@@ -1,0 +1,181 @@
+import React from 'react';
+import { NETWORK_META, CONTACT_METHODS } from '../data/network';
+import { useToast } from './Toast';
+import { CURRENT_BRAND_LOGO } from '../utils/brandLogo';
+import { ArrowUp, ExternalLink, Send, Mail, MessageSquare, Copy } from 'lucide-react';
+
+export const Footer: React.FC = () => {
+  const { copyToClipboard } = useToast();
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getPlatformIcon = (type: string) => {
+    switch (type) {
+      case 'telegram':
+        return <Send className="w-4 h-4 text-cyan-400" />;
+      case 'email':
+        return <Mail className="w-4 h-4 text-purple-400" />;
+      case 'matrix':
+        return <MessageSquare className="w-4 h-4 text-emerald-400" />;
+      default:
+        return <ExternalLink className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  return (
+    <footer id="contact" className="w-full border-t border-white/10 bg-[#05070c] py-12 mt-12 text-xs text-slate-400 font-sans scroll-mt-20">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        
+        {/* Top: Compact Contact Matrix & Network Brand */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-b border-white/10 pb-10">
+          
+          {/* Left Brand Summary (4 Cols) */}
+          <div className="lg:col-span-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center shadow-lg shadow-cyan-950/40 overflow-hidden shrink-0">
+                <img
+                  src={CURRENT_BRAND_LOGO}
+                  alt="AkiLab Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="font-bold text-white text-base font-sans">{NETWORK_META.networkName}</div>
+                <div className="text-xs text-cyan-400 font-mono font-semibold">{NETWORK_META.asn}</div>
+              </div>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed font-sans">
+              AkiLab 是由 <strong className="text-slate-300">AKIRA</strong> 维护的个人非盈利 DN42 路由实验网络，由几台廉价服务器东拼西凑而成。欢迎各位网络同好建立 BGP Peer 共同交流！
+            </p>
+          </div>
+
+          {/* Right Contact Channels Grid (8 Cols) */}
+          <div className="lg:col-span-8 space-y-3">
+            <div className="flex items-center justify-between text-xs pb-1">
+              <span className="font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono text-[11px] text-cyan-400">
+                联络渠道与即时响应 (Contact Matrix)
+              </span>
+              <span className="text-slate-500 font-mono text-[11px]">响应时效: &lt; 2小时</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {CONTACT_METHODS.map((item) => (
+                <div
+                  key={item.platform}
+                  className="p-3 rounded-xl bg-black/50 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                      {getPlatformIcon(item.type)}
+                    </div>
+                    <div className="overflow-hidden">
+                      <div className="text-white text-xs font-semibold flex items-center gap-1">
+                        <span>{item.platform}</span>
+                        {item.preferred && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                        )}
+                      </div>
+                      <div className="font-mono text-[11px] text-slate-400 truncate">{item.handle}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => copyToClipboard(item.handle, item.platform)}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      title="复制"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    {item.link && (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 transition-colors"
+                        title="打开"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Middle: Fast Links & Back to Top */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-5 text-xs font-mono">
+            {NETWORK_META.dn42WhoisUrl && (
+              <a
+                href={NETWORK_META.dn42WhoisUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+              >
+                <span>DN42 Registry WHOIS</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {NETWORK_META.lookingGlassUrl && (
+              <a
+                href={NETWORK_META.lookingGlassUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+              >
+                <span>Looking Glass</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            <a
+              href="https://dn42.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+            >
+              <span>DN42 Wiki</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <button
+            onClick={scrollToTop}
+            className="p-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer text-xs"
+            title="回到顶部"
+          >
+            <span>Back to top</span>
+            <ArrowUp className="w-3.5 h-3.5 text-cyan-400" />
+          </button>
+        </div>
+
+        {/* Bottom: Copyright */}
+        <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-slate-500 text-[11px]">
+          <div>
+            &copy; {new Date().getFullYear()} {NETWORK_META.networkName} (Maintained by <span className="text-slate-400 font-semibold">AKIRA</span>). Licensed under{' '}
+            <a
+              href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-slate-400 hover:underline"
+            >
+              CC-BY-NC-SA 4.0
+            </a>
+            .
+          </div>
+          <div className="font-mono text-[11px] flex items-center gap-1 text-slate-400">
+            <span>Powered by</span>
+            <span className="text-cyan-400">BIRD 2 + WireGuard</span>
+            <span>&middot; Built with Passion for Decentralization</span>
+          </div>
+        </div>
+
+      </div>
+    </footer>
+  );
+};

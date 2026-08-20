@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #06080d;
+    --bg-secondary: #0b0f17;
+    --bg-card: rgba(13, 19, 30, 0.75);
+    --bg-card-hover: rgba(18, 26, 42, 0.9);
+    --bg-input: rgba(5, 8, 14, 0.8);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(6, 182, 212, 0.4);
+    --border-glow: rgba(6, 182, 212, 0.6);
+
+    --accent-cyan: #06b6d4;
+    --accent-cyan-light: #67e8f9;
+    --accent-blue: #3b82f6;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-purple: #a855f7;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-code: #38bdf8;
+
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.12) 0%, transparent 60%),
+      radial-gradient(circle at 10% 40%, rgba(59, 130, 246, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 90% 70%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+  }
+}
+
+@layer components {
+  /* Glassmorphism & Cards */
+  .glass-panel {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-panel:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 12px 36px -10px rgba(6, 182, 212, 0.2);
+  }
+
+  .glass-card {
+    background: rgba(12, 17, 26, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+  }
+
+  /* Buttons */
+  .btn-cyber {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(59, 130, 246, 0.12));
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    color: #38bdf8;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-cyber:hover {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.25));
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #06b6d4, #2563eb);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #22d3ee, #3b82f6);
+    box-shadow: 0 0 22px rgba(6, 182, 212, 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* Dark Themed Select & Options */
+  select {
+    background-color: #080d19 !important;
+    color: #f1f5f9 !important;
+  }
+
+  select option {
+    background-color: #0c1424 !important;
+    color: #e2e8f0 !important;
+    padding: 10px 14px !important;
+  }
+
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background-color: #162b48 !important;
+    color: #38bdf8 !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #06090e;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
+}
+
+/* Leaflet Container & Markers */
+.leaflet-container {
+  background: #080b12 !important;
+  font-family: var(--font-sans) !important;
+  border-radius: 14px;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(10, 15, 24, 0.95) !important;
+  backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(6, 182, 212, 0.35) !important;
+  color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(10, 15, 24, 0.95) !important;
+  border: 1px solid rgba(6, 182, 212, 0.35) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.custom-node-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.custom-node-marker:hover {
+  transform: scale(1.25);
+  z-index: 1000 !important;
+}
+
+/* Studio Step Reveal Animations - Cinematic Slow Motion */
+@keyframes stepReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-step-1 {
+  animation: stepReveal 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-step-2 {
+  animation: stepReveal 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
