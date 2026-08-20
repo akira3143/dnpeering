@@ -1,24 +1,24 @@
 import type { NetworkMeta, NodeInfo, BGPCommunity, ContactMethod } from '../types/network';
 
 /**
- * 自治系统 (AS) 核心元数据配置 - AkiLab Networks
+ * 自治系统 (AS) 核心元数据配置 (示例模板)
  */
 export const NETWORK_META: NetworkMeta = {
-  asn: 'AS4242423143',
-  asnNumber: 4242423143,
-  networkName: 'AkiLab Networks',
-  maintainer: 'AKIRA-DN42',
-  ipv4Pool: '172.20.188.0/27',
-  ipv6Pool: 'fd5c:300e:8ae7::/48',
+  asn: 'AS4242421337',
+  asnNumber: 4242421337,
+  networkName: 'Example DN42 Network',
+  maintainer: 'EXAMPLE-MNT',
+  ipv4Pool: '172.20.0.0/24',
+  ipv6Pool: 'fd00:4242:1337::/48',
   routingPolicy: 'Open for all DN42 participants / MP-BGP (ENH) / Strict ROA Validation',
   bgpMode: 'MP-BGP + Extended Next Hop (ENH) / Dual-Stack Supported',
   portFormulaDisplay: '20000 + (ASN % 10000) [严格限制 10000~65535，多实例自动顺延 30000/40000+ASN]',
-  lookingGlassUrl: 'https://lg.dn42.akira.moe',
-  dn42WhoisUrl: 'https://explorer.burble.dn42/services/whois/?search=AS4242423143',
-  topologyUrl: 'https://topo.dn42.akira.moe',
-  flapAlertUrl: 'https://flap.dn42.akira.moe',
-  autoPeerUrl: 'https://peer.dn42.akira.moe',
-  lastUpdated: '2026-08-19',
+  lookingGlassUrl: 'https://lg.example.dn42',
+  dn42WhoisUrl: 'https://explorer.burble.dn42/services/whois/?search=AS4242421337',
+  topologyUrl: 'https://topo.example.dn42',
+  flapAlertUrl: 'https://flap.example.dn42',
+  autoPeerUrl: 'https://peer.example.dn42',
+  lastUpdated: '2026-08-20',
 };
 
 export type PortStatusType = 'default' | 'fallback_1' | 'fallback_2' | 'fallback_multi' | 'custom_valid' | 'custom_occupied';
@@ -161,125 +161,93 @@ export function resolveHostListenPort(
   return {
     port: offsetPort,
     defaultPort,
-    tier: 99,
+    tier: 4,
     status: 'fallback_multi',
-    label: `备用端口 ${offsetPort}`,
+    label: `动态顺延端口 ${offsetPort}`,
     isFallback: true,
     isAvailable: true,
   };
 }
 
-export function calculateWgPort(asnInput: string | number, nodeId?: string): number {
-  return resolveHostListenPort(asnInput, nodeId).port;
-}
-
 /**
- * 计算对端在其自己 VPS 上监听站长的端口 (Peer Client ListenPort)
- * 智能同地域多节点支持：
- * - 针对 JP-7 (核心): 默认 23143 (20000 + 3143)
- * - 针对同机房的 JP-2 (二号机): 智能默认 33143 (30000 + 3143)，对端在同一台 VPS 连接两台 JP 节点时 0 冲突！
+ * 确定性计算对端应该监听的端口 (客户端端口):
+ * - 默认分配 20000 + (本网 ASN % 10000)
  */
-export function calculatePeerListenPort(nodeId?: string, forceFallback: boolean = false): number {
-  const hostSuffix = NETWORK_META.asnNumber % 10000; // 3143
+export function calculatePeerListenPort(_nodeId?: string, forceFallback: boolean = false): number {
+  const hostSuffix = NETWORK_META.asnNumber % 10000;
   
   if (forceFallback) {
-    return 30000 + hostSuffix; // 33143
+    return 30000 + hostSuffix;
   }
 
-  // 智能避免对端在同一 VPS 连接 JP-7 与 JP-2 时本机 23143 端口冲突
-  if (nodeId === 'jp02') {
-    return 30000 + hostSuffix; // 33143
-  }
-
-  return 20000 + hostSuffix; // 23143
+  return 20000 + hostSuffix;
 }
 
 /**
- * 全球 PoP 节点列表配置 (AkiLab 真实节点清单)
+ * 全球 PoP 节点列表配置 (示例模板)
  */
 export const NETWORK_NODES: NodeInfo[] = [
   {
     id: 'jp07',
-    code: 'JP-7',
-    name: 'Tokyo 07 (Japan Hub)',
+    code: 'JP-1',
+    name: 'Tokyo 01 (Japan Hub)',
     flag: '🇯🇵',
     city: 'Tokyo',
     country: 'Japan',
     region: 'apac',
     coordinates: [35.6762, 139.6503],
     status: 'active',
-    isp: 'Tokyo Datacenter',
-    endpointDomain: 'jp7-dn42.akilab.meme',
-    wgPublicKey: 'ma9vpr25iBDKthbd8tUFuCxbyzfJ2YHJ+K8bgdzOqzk=',
-    tunnelIpv4: '172.20.188.7',
-    tunnelIpv6ULA: 'fd5c:300e:8ae7::7',
-    tunnelIpv6LLA: 'fe80::3143',
+    isp: 'Example Datacenter',
+    endpointDomain: 'jp1.example.dn42',
+    wgPublicKey: 'EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_111111=',
+    tunnelIpv4: '172.20.0.1',
+    tunnelIpv6ULA: 'fd00:4242:1337::1',
+    tunnelIpv6LLA: 'fe80::1337',
     mtu: 1420,
-    features: ['★ Core Hub', 'MP-BGP', 'ENH', 'tyix Direct'],
+    features: ['★ Core Hub', 'MP-BGP', 'ENH', 'Extended Next Hop'],
     notes: '东亚互联核心枢纽，推荐日本、香港、台湾等东亚地区接入。',
     occupiedPorts: [],
   },
   {
-    id: 'jp02',
-    code: 'JP-2',
-    name: 'Tokyo 02 (DC Peer / Direct)',
-    flag: '🇯🇵',
-    city: 'Tokyo',
-    country: 'Japan',
-    region: 'apac',
-    coordinates: [35.6895, 139.6917],
-    status: 'active',
-    isp: 'Tokyo Datacenter',
-    endpointDomain: 'jp2-dn42.akilab.meme',
-    wgPublicKey: 'ay/2GTy1T4gcmqqvbeU2scM4uJ6FBXfp9TdF0yT540I=',
-    tunnelIpv4: '172.20.188.2',
-    tunnelIpv6ULA: 'fd5c:300e:8ae7::2',
-    tunnelIpv6LLA: 'fe80::3143',
-    mtu: 1420,
-    features: ['MP-BGP', 'ENH', 'tyix Direct'],
-    notes: '与 JP-7 同属东京机房，推荐东亚地区互联。',
-    occupiedPorts: [],
-  },
-  {
-    id: 'hk01',
-    code: 'HK-1',
-    name: 'Hong Kong 01 (Kwai Chung)',
-    flag: '🇭🇰',
-    city: 'Hong Kong SAR',
-    country: 'China',
-    region: 'apac',
-    coordinates: [22.3193, 114.1694],
-    status: 'active',
-    isp: 'Hong Kong Datacenter',
-    endpointDomain: 'hk1-dn42.akilab.meme',
-    wgPublicKey: 'XV/dM5hZf/ulCo0GmYhYfngdESUdobvjxYtbv7v3chM=',
-    tunnelIpv4: '172.20.188.3',
-    tunnelIpv6ULA: 'fd5c:300e:8ae7::3',
-    tunnelIpv6LLA: 'fe80::3143',
-    mtu: 1420,
-    features: ['MP-BGP', 'ENH', 'SEA Low Latency'],
-    notes: '推荐香港、大陆、新加坡及东南亚地区接入。',
-    occupiedPorts: [],
-  },
-  {
-    id: 'usla01',
-    code: 'US-LA',
-    name: 'Los Angeles 01 (One Wilshire)',
+    id: 'us01',
+    code: 'US-1',
+    name: 'Silicon Valley 01 (US West)',
     flag: '🇺🇸',
-    city: 'Los Angeles',
+    city: 'San Jose',
     country: 'United States',
     region: 'na',
-    coordinates: [34.0522, -118.2437],
+    coordinates: [37.3382, -121.8863],
     status: 'active',
-    isp: 'CoreSite LA1 / One Wilshire',
-    endpointDomain: 'akiusla1-dn42.akilab.meme',
-    wgPublicKey: 'CBbv9qUv/u7j/keioB3yx7NaL5yxlI+0ej+SsXVuJ1o=',
-    tunnelIpv4: '172.20.188.1',
-    tunnelIpv6ULA: 'fd5c:300e:8ae7::1',
-    tunnelIpv6LLA: 'fe80::3143',
+    isp: 'Example Datacenter',
+    endpointDomain: 'us1.example.dn42',
+    wgPublicKey: 'EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_222222=',
+    tunnelIpv4: '172.20.0.2',
+    tunnelIpv6ULA: 'fd00:4242:1337::2',
+    tunnelIpv6LLA: 'fe80::1337',
     mtu: 1420,
-    features: ['MP-BGP', 'ENH', 'Trans-Pacific Hub'],
+    features: ['MP-BGP', 'ENH', 'Trans-Pacific'],
     notes: '美洲及美西互联推荐节点，直连跨太平洋骨干。',
+    occupiedPorts: [],
+  },
+  {
+    id: 'de02',
+    code: 'DE-1',
+    name: 'Frankfurt 01 (Europe Hub)',
+    flag: '🇩🇪',
+    city: 'Frankfurt',
+    country: 'Germany',
+    region: 'eu',
+    coordinates: [50.1109, 8.6821],
+    status: 'active',
+    isp: 'Example Datacenter',
+    endpointDomain: 'de1.example.dn42',
+    wgPublicKey: 'EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_333333=',
+    tunnelIpv4: '172.20.0.3',
+    tunnelIpv6ULA: 'fd00:4242:1337::3',
+    tunnelIpv6LLA: 'fe80::1337',
+    mtu: 1420,
+    features: ['MP-BGP', 'ENH', 'DE-CIX Peering'],
+    notes: '欧洲地区核心互联节点。',
     occupiedPorts: [],
   },
 ];
@@ -288,9 +256,8 @@ export const NETWORK_NODES: NodeInfo[] = [
  * 内部骨干链路连接关系
  */
 export const BACKBONE_LINKS: [string, string][] = [
-  ['jp07', 'jp02'], // tyix Direct
-  ['jp07', 'hk01'], // JP <-> HK
-  ['jp07', 'usla01'], // JP <-> US-LA Trans-Pacific
+  ['jp07', 'us01'],
+  ['jp07', 'de02'],
 ];
 
 /**
@@ -317,23 +284,23 @@ export const BGP_COMMUNITIES: BGPCommunity[] = [
 export const CONTACT_METHODS: ContactMethod[] = [
   {
     platform: 'Telegram',
-    handle: '@akira_dn42',
-    link: 'https://t.me/akira_dn42',
+    handle: '@example_dn42',
+    link: 'https://t.me/example_dn42',
     type: 'telegram',
     responseTime: '< 2 小时 (推荐)',
     preferred: true,
   },
   {
     platform: 'Email',
-    handle: 'dn42@akira.moe',
-    link: 'mailto:dn42@akira.moe',
+    handle: 'dn42@example.com',
+    link: 'mailto:dn42@example.com',
     type: 'email',
     responseTime: '< 12 小时',
   },
   {
     platform: 'Matrix',
-    handle: '@akira:matrix.org',
-    link: 'https://matrix.to/#/@akira:matrix.org',
+    handle: '@admin:example.org',
+    link: 'https://matrix.to/#/@admin:example.org',
     type: 'matrix',
     responseTime: '< 6 小时',
   },

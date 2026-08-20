@@ -42,16 +42,16 @@ def sync():
 
     print(f"[DN42 Registry] Successfully extracted {extracted_count} registry objects to {DEST_REGISTRY_DIR}!")
 
-    # Verify AS4242423143
-    test_as_file = os.path.join(DEST_REGISTRY_DIR, "aut-num", "AS4242423143")
+    # Verify AS4242421337
+    test_as_file = os.path.join(DEST_REGISTRY_DIR, "aut-num", "AS4242421337")
     if os.path.exists(test_as_file):
-        print("\n[Verification] Verified AS4242423143:")
+        print("\n[Verification] Verified AS4242421337:")
         with open(test_as_file, "r", encoding="utf-8") as f:
             print(f.read())
 
-    test_mnt_file = os.path.join(DEST_REGISTRY_DIR, "mntner", "AKIRA-MNT")
+    test_mnt_file = os.path.join(DEST_REGISTRY_DIR, "mntner", "EXAMPLE-MNT")
     if os.path.exists(test_mnt_file):
-        print("\n[Verification] Verified AKIRA-MNT:")
+        print("\n[Verification] Verified EXAMPLE-MNT:")
         with open(test_mnt_file, "r", encoding="utf-8") as f:
             print(f.read())
 

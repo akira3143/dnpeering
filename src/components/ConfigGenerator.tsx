@@ -165,7 +165,7 @@ PersistentKeepalive = 25
 }
 
 protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
-    neighbor ${selectedNode.tunnelIpv4 || '172.20.188.x'} as ${NETWORK_META.asnNumber};
+    neighbor ${selectedNode.tunnelIpv4 || '172.20.0.x'} as ${NETWORK_META.asnNumber};
     ipv4 {
         import filter dn42_import_filter;
         export filter dn42_export_filter;
@@ -435,7 +435,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
     setPeerWgPubKey('zG8r7QGqR+V9YjK6iFmP7a4b8cD9eF0g1H2i3J4k5L6=');
     setPeerIpv6LLA('fe80::9998');
     setPeerIpv6ULA('fd42:4242:9998::1');
-    setPeerIpv4('172.20.188.99');
+    setPeerIpv4('172.20.0.99');
     showToast('已填入 DN42 互联规范示例数据', 'info');
   };
 

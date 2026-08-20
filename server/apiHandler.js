@@ -190,7 +190,7 @@ export function handleGetSessionsByAsn(asn, authHeader) {
 }
 
 /**
- * Handles GET /api/dn42-lookup?asn=4242423143
+ * Handles GET /api/dn42-lookup?asn=4242421337
  */
 export async function handleDn42Lookup(asn) {
   const identity = await getAsnIdentity(asn);

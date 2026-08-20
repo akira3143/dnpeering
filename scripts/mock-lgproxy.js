@@ -30,8 +30,8 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/raw') {
     if (q.startsWith('show status')) {
       res.writeHead(200);
-      res.end(`BIRD 2.15.1 (AkiLab Live Node Socket - Tokyo JP-7)
-Router ID:       172.20.188.7
+      res.end(`BIRD 2.15.1 (Example Live Node Socket - Tokyo JP-1)
+Router ID:       172.20.0.1
 Current server time: ${new Date().toISOString().replace('T', ' ').slice(0, 19)}
 Last reconfigure:    2026-08-20 18:30:00 (Loaded via BIRD CLI)
 Daemon is up and running.
@@ -57,7 +57,7 @@ Routing Tables:  master4 (428 routes), master6 (392 routes)`);
 Name       Proto      Table      State  Since         Info
 device1    Device     master4    up     2026-08-19 12:00:00
 direct1    Direct     master4    up     2026-08-19 12:00:00
-dn42_jp7_rr BGP        master4    up     2026-08-19 12:00:00  Established   Routes: 428 imported, 428 exported
+dn42_jp1_rr BGP        master4    up     2026-08-19 12:00:00  Established   Routes: 428 imported, 428 exported
 dn42_us01_ibgp BGP      master4    up     2026-08-19 12:05:00  Established   Routes: 180 imported, 380 exported
 dn42_akilab_as4242421337_jp07 BGP master4 up 2026-08-20 14:00:00 Established Routes: 12 imported, 18 exported
 dn42_v6_mesh BGP        master6    up     2026-08-19 12:00:00  Established   Routes: 392 imported, 392 exported`);
@@ -68,15 +68,15 @@ dn42_v6_mesh BGP        master6    up     2026-08-19 12:00:00  Established   Rou
     res.writeHead(200);
     res.end(`BIRD 2.15.1 ready.
 Table master4:
-${q.replace(/show route (for )?/i, '').trim() || '172.20.0.53/32'} unicast [dn42_jp7_rr 2026-08-20 14:25:31] * (100) [AS4242423143i]
-	via 172.20.188.7 on wg-jp07-core
+${q.replace(/show route (for )?/i, '').trim() || '172.20.0.53/32'} unicast [dn42_jp1_rr 2026-08-20 14:25:31] * (100) [AS4242421337i]
+	via 172.20.0.1 on wg-jp07-core
 	Type: BGP univ
 	BGP.origin: IGP
-	BGP.as_path: 4242423143 4242420053
-	BGP.next_hop: 172.20.188.7
+	BGP.as_path: 4242421337 4242420053
+	BGP.next_hop: 172.20.0.1
 	BGP.local_pref: 100
 	BGP.community: (64512, 1) (424242, 1000) (424242, 1007)
-	BGP.large_community: (4242423143, 1, 100) (4242423143, 2, 7)
+	BGP.large_community: (4242421337, 1, 100) (4242421337, 2, 7)
 	ROA.status: ROA_VALID (DN42 Registry verified)`);
     return;
   }
@@ -102,7 +102,7 @@ rtt min/avg/max/mdev = 1.285/1.333/1.412/0.052 ms`);
     const target = q || '172.20.0.53';
     res.writeHead(200);
     res.end(`traceroute to ${target} (30 hops max, 60 byte packets)
- 1  core-gw-jp07.akilab.dn42 (172.20.188.7)  0.215 ms  0.198 ms  0.204 ms
+ 1  core-gw-jp07.example.dn42 (172.20.0.1)  0.215 ms  0.198 ms  0.204 ms
  2  tokyo-ix.dn42 (172.20.0.1)  1.120 ms  1.098 ms  1.110 ms
  3  target-node (${target})  1.325 ms  1.290 ms  1.310 ms`);
     return;

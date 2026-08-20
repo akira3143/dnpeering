@@ -72,10 +72,10 @@ export async function downloadAndSyncOfficialRegistry() {
   try { fs.unlinkSync(ZIP_PATH); } catch {}
   try { fs.rmSync(EXTRACT_TMP, { recursive: true, force: true }); } catch {}
 
-  // Verify AS4242423143
-  const testAsPath = path.join(destDataDir, 'aut-num', 'AS4242423143');
+  // Verify AS4242421337
+  const testAsPath = path.join(destDataDir, 'aut-num', 'AS4242421337');
   if (fs.existsSync(testAsPath)) {
-    console.log('\n🔍 [Verification] Verified AS4242423143 object from official registry:');
+    console.log('\n🔍 [Verification] Verified AS4242421337 object from official registry:');
     console.log(fs.readFileSync(testAsPath, 'utf-8'));
   }
 }
