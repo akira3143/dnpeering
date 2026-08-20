@@ -134,6 +134,11 @@ systemctl daemon-reload
 systemctl enable --now ${SERVICE_NAME} >/dev/null 2>&1
 echo -e "${GREEN}✓ systemd 服务已注册并启动！${NC}"
 
+# 安装 CLI 快捷指令
+chmod +x "$PORTAL_DIR/scripts/portal-cli.sh"
+ln -sf "$PORTAL_DIR/scripts/portal-cli.sh" /usr/local/bin/portal
+echo -e "${GREEN}✓ 快捷指令 'portal' 已安装至 /usr/local/bin/portal${NC}"
+
 # 8. 健康自检
 echo -e "${CYAN}🏥 [7/7] 执行服务健康自检...${NC}"
 sleep 2
