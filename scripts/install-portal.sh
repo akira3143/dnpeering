@@ -134,10 +134,11 @@ systemctl daemon-reload
 systemctl enable --now ${SERVICE_NAME} >/dev/null 2>&1
 echo -e "${GREEN}✓ systemd 服务已注册并启动！${NC}"
 
-# 安装 CLI 快捷指令
+# 安装 CLI 极速快捷指令 (dnp 与 portal)
 chmod +x "$PORTAL_DIR/scripts/portal-cli.sh"
+ln -sf "$PORTAL_DIR/scripts/portal-cli.sh" /usr/local/bin/dnp
 ln -sf "$PORTAL_DIR/scripts/portal-cli.sh" /usr/local/bin/portal
-echo -e "${GREEN}✓ 快捷指令 'portal' 已安装至 /usr/local/bin/portal${NC}"
+echo -e "${GREEN}✓ 极速快捷指令 'dnp' 与 'portal' 已安装至 /usr/local/bin/${NC}"
 
 # 8. 健康自检
 echo -e "${CYAN}🏥 [7/7] 执行服务健康自检...${NC}"
@@ -156,13 +157,15 @@ echo -e "${GREEN}===============================================================
 echo ""
 echo -e "📍 ${CYAN}项目主目录:${NC}  ${PORTAL_DIR}"
 echo -e "⚙️ ${CYAN}统一配置文件:${NC} ${PORTAL_DIR}/portal.config.yaml"
-echo -e "🔑 ${CYAN}密钥与环境:${NC}   ${PORTAL_DIR}/env"
+echo -e "🔑 ${CYAN}密钥与环境:${NC}   ${PORTAL_DIR}/.env"
 echo ""
-echo -e "${YELLOW}🔧 常用运维指令:${NC}"
-echo -e "  • 查看运行状态:  ${PURPLE}systemctl status ${SERVICE_NAME}${NC}"
-echo -e "  • 查看实时日志:  ${PURPLE}journalctl -u ${SERVICE_NAME} -f${NC}"
-echo -e "  • 重启门户服务:  ${PURPLE}systemctl restart ${SERVICE_NAME}${NC}"
-echo -e "  • 编辑节点信息:  ${PURPLE}nano ${PORTAL_DIR}/portal.config.yaml${NC} (保存即生效，无需重启)"
+echo -e "${YELLOW}⚡ 极速快捷指令 (只需敲这几个字母):${NC}"
+echo -e "  • ${GREEN}dnp c${NC}  (config)   - 编辑节点与 ASN 统一配置 (修改保存即全站生效)"
+echo -e "  • ${GREEN}dnp l${NC}  (logs)     - 查看实时滚动日志 (实时看谁在查 LG、谁在申请 Peer)"
+echo -e "  • ${GREEN}dnp s${NC}  (status)   - 查看服务运行状态与内存开销"
+echo -e "  • ${GREEN}dnp r${NC}  (restart)  - 重启门户服务"
+echo -e "  • ${GREEN}dnp u${NC}  (update)   - 一键拉取 GitHub 最新版本并热升级"
+echo -e "  • ${GREEN}dnp e${NC}  (env)      - 编辑 .env 密钥与 Telegram Token"
 echo ""
 echo -e "${YELLOW}🌐 Caddy 反向代理配置建议 (/etc/caddy/Caddyfile):${NC}"
 echo -e "${CYAN}------------------------------------------------------------------${NC}"
