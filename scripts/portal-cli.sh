@@ -11,7 +11,7 @@
 #   dnp e  -> 编辑 .env 密钥 (env)
 # ==============================================================================
 
-PORTAL_DIR="/opt/dn42-peering-portal"
+PORTAL_DIR="/opt/dnpeering"
 SERVICE_NAME="dn42-portal"
 
 GREEN='\033[0;32m'

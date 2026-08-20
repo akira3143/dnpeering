@@ -1,4 +1,4 @@
-# dn42-peering-portal
+# dnpeering
 
 Personal DN42 peering management page and Looking Glass diagnostic portal.
 
@@ -22,7 +22,7 @@ Personal DN42 peering management page and Looking Glass diagnostic portal.
 在 Debian 11/12/13 或 Ubuntu 服务器上执行（自动安装 Node.js、拉取代码、编译生产包、生成私钥与注册 systemd 守护）：
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/akira3143/dn42-peering-portal/main/scripts/install-portal.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-portal.sh | sudo bash
 ```
 
 #### 2. 边缘 PoP 节点探针部署 (Probe Agent)
@@ -30,14 +30,14 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dn42-peering-portal/main/s
 
 ```bash
 # 交互式向导安装 (支持本地模式 / 远端 PoP 模式选择)
-curl -sSL https://raw.githubusercontent.com/akira3143/dn42-peering-portal/main/scripts/install-probe.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash
 
 # 或指定参数静默安装:
 # 主站同机模式:
-curl -sSL https://raw.githubusercontent.com/akira3143/dn42-peering-portal/main/scripts/install-probe.sh | sudo bash -s -- --listen 127.0.0.1:5000
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen 127.0.0.1:5000
 
 # 远端节点模式 (带安全 Token):
-curl -sSL https://raw.githubusercontent.com/akira3143/dn42-peering-portal/main/scripts/install-probe.sh | sudo bash -s -- --listen 0.0.0.0:5000 --token your_secret_token
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen 0.0.0.0:5000 --token your_secret_token
 ```
 
 ---

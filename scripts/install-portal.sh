@@ -17,8 +17,8 @@ RED='\033[0;31m'
 PURPLE='\033[0;35m'
 NC='\033[0m'
 
-PORTAL_DIR="/opt/dn42-peering-portal"
-REPO_URL="https://github.com/akira3143/dn42-peering-portal.git"
+PORTAL_DIR="/opt/dnpeering"
+REPO_URL="https://github.com/akira3143/dnpeering.git"
 SERVICE_NAME="dn42-portal"
 DEFAULT_PORT="3143"
 
