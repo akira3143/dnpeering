@@ -15,19 +15,6 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, onSelectForPeering }) 
 
   const userSession = activeSessions.find(s => s.nodeId === node.id);
 
-  const handleOpenLookingGlass = () => {
-    window.dispatchEvent(
-      new CustomEvent('akilab-open-looking-glass', {
-        detail: {
-          nodeId: node.id,
-          commandType: 'route',
-          target: node.tunnelIpv4,
-          autoRun: true,
-        },
-      })
-    );
-  };
-
   return (
     <div className="glass-panel p-5 sm:p-6 flex flex-col justify-between space-y-4 border border-white/[0.08] hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-950/40 transition-all duration-300 group rounded-2xl relative">
       
@@ -75,58 +62,13 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, onSelectForPeering }) 
           </p>
         </div>
 
-        {/* Key Parameters Table */}
-        <div className="rounded-xl bg-black/40 border border-white/5 divide-y divide-white/5 font-mono text-xs overflow-hidden">
-          {/* IPv6 LLA */}
-          <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
-            <span className="text-slate-400 font-sans text-xs shrink-0">IPv6 (LLA):</span>
-            <div className="flex items-center gap-2">
-              <span className="text-cyan-300 font-semibold">{node.tunnelIpv6LLA}</span>
-              <button
-                onClick={() => copyToClipboard(node.tunnelIpv6LLA, 'IPv6 LLA')}
-                className="text-slate-500 hover:text-cyan-300 p-0.5 transition-colors cursor-pointer shrink-0"
-                title="复制 IPv6 LLA"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* IPv6 ULA */}
-          <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
-            <span className="text-slate-400 font-sans text-xs shrink-0">IPv6 (ULA):</span>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-200">{node.tunnelIpv6ULA}</span>
-              <button
-                onClick={() => copyToClipboard(node.tunnelIpv6ULA || '', 'IPv6 ULA')}
-                className="text-slate-500 hover:text-cyan-300 p-0.5 transition-colors cursor-pointer shrink-0"
-                title="复制 IPv6 ULA"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* IPv4 */}
-          <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
-            <span className="text-slate-400 font-sans text-xs shrink-0">IPv4 (DN42):</span>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-200">{node.tunnelIpv4}</span>
-              <button
-                onClick={() => copyToClipboard(node.tunnelIpv4 || '', 'IPv4')}
-                className="text-slate-500 hover:text-cyan-300 p-0.5 transition-colors cursor-pointer shrink-0"
-                title="复制 IPv4"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
+        {/* Key Parameters Table (Only Endpoint) */}
+        <div className="rounded-xl bg-black/40 border border-white/5 font-mono text-xs overflow-hidden">
           {/* Endpoint Domain */}
           <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
             <span className="text-slate-400 font-sans text-xs shrink-0">Endpoint:</span>
             <div className="flex items-center gap-2">
-              <span className="text-slate-200 truncate max-w-[170px]" title={node.endpointDomain}>
+              <span className="text-slate-200 truncate max-w-[200px]" title={node.endpointDomain}>
                 {node.endpointDomain}
               </span>
               <button
@@ -141,22 +83,13 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, onSelectForPeering }) 
         </div>
       </div>
 
-      {/* Bottom Action Buttons */}
-      <div className="flex items-center gap-2 pt-3 border-t border-white/10">
-        <button
-          onClick={handleOpenLookingGlass}
-          className="flex-1 py-2 px-2.5 rounded-xl bg-white/5 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-          title="使用 Looking Glass 探测此节点"
-        >
-          <Activity className="w-3.5 h-3.5 text-cyan-400" />
-          <span>路由探测</span>
-        </button>
-
+      {/* Bottom Action Button (Full width 发起 Peer) */}
+      <div className="pt-3 border-t border-white/10">
         <button
           onClick={() => {
             if (onSelectForPeering) onSelectForPeering(node.id);
           }}
-          className="btn-primary py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-cyan-950/40 cursor-pointer shrink-0"
+          className="btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-md shadow-cyan-950/40 cursor-pointer"
         >
           <Terminal className="w-3.5 h-3.5" />
           <span>发起 Peer</span>
