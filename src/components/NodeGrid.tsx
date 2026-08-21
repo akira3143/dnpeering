@@ -74,11 +74,11 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
           <div className="overflow-x-auto">
             <div className="min-w-[860px]">
               
-              {/* Table Header (Centered columns matching MTU) */}
-              <div className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
-                <div className="text-left pl-2">节点名称 / 代号</div>
+              {/* Table Header */}
+              <div className="grid grid-cols-[2.4fr_1.2fr_2.6fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
+                <div className="text-center">节点名称 / 代号</div>
                 <div className="text-center">状态</div>
-                <div className="text-center">WireGuard Endpoint</div>
+                <div className="text-left pl-4">WIREGUARD ENDPOINT</div>
                 <div className="text-center">推荐 MTU</div>
                 <div className="text-center">操作</div>
               </div>
@@ -90,10 +90,10 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                   return (
                     <div
                       key={node.id}
-                      className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
+                      className="grid grid-cols-[2.4fr_1.2fr_2.6fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
                     >
-                      {/* Column 1: Node Name & Code (Left-aligned) */}
-                      <div className="flex items-center gap-3.5 text-left pl-2 min-w-0">
+                      {/* Column 1: Node Name & Code */}
+                      <div className="flex items-center gap-3.5 text-left pl-3 min-w-0">
                         <span className="text-xl sm:text-2xl shrink-0 select-none">{node.flag}</span>
                         <div className="min-w-0">
                           <div className="font-sans font-semibold text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
@@ -130,8 +130,8 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         )}
                       </div>
 
-                      {/* Column 3: Endpoint (Centered) */}
-                      <div className="flex items-center justify-center gap-2">
+                      {/* Column 3: Endpoint (Left-aligned with header) */}
+                      <div className="flex items-center gap-2 text-left pl-4">
                         <span className="truncate max-w-[260px] text-slate-200 group-hover:text-cyan-200 transition-colors font-semibold" title={node.endpointDomain}>
                           {node.endpointDomain}
                         </span>
