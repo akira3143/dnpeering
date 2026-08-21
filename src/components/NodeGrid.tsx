@@ -74,11 +74,11 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
           <div className="overflow-x-auto">
             <div className="min-w-[860px]">
               
-              {/* Table Header */}
-              <div className="grid grid-cols-[2.4fr_1.2fr_2.6fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
+              {/* Table Header (All headers strictly centered) */}
+              <div className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
                 <div className="text-center">节点名称 / 代号</div>
                 <div className="text-center">状态</div>
-                <div className="text-left pl-4">WIREGUARD ENDPOINT</div>
+                <div className="text-center">WIREGUARD ENDPOINT</div>
                 <div className="text-center">推荐 MTU</div>
                 <div className="text-center">操作</div>
               </div>
@@ -90,21 +90,23 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                   return (
                     <div
                       key={node.id}
-                      className="grid grid-cols-[2.4fr_1.2fr_2.6fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
+                      className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
                     >
-                      {/* Column 1: Node Name & Code */}
-                      <div className="flex items-center gap-3.5 text-left pl-3 min-w-0">
-                        <span className="text-xl sm:text-2xl shrink-0 select-none">{node.flag}</span>
-                        <div className="min-w-0">
-                          <div className="font-sans font-semibold text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
-                            {node.name}
-                          </div>
-                          <div className="text-[11px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
-                            <span className="text-cyan-400 font-bold">{node.code}</span>
-                            <span>&middot;</span>
-                            <span>{node.city}</span>
-                            <span>&middot;</span>
-                            <span>{node.isp}</span>
+                      {/* Column 1: Node Name & Code (Centered block with internal left alignment) */}
+                      <div className="flex justify-center">
+                        <div className="flex items-center gap-3.5 text-left w-[260px] min-w-0">
+                          <span className="text-xl sm:text-2xl shrink-0 select-none">{node.flag}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-sans font-semibold text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
+                              {node.name}
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
+                              <span className="text-cyan-400 font-bold">{node.code}</span>
+                              <span>&middot;</span>
+                              <span>{node.city}</span>
+                              <span>&middot;</span>
+                              <span>{node.isp}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -130,18 +132,20 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         )}
                       </div>
 
-                      {/* Column 3: Endpoint (Left-aligned with header) */}
-                      <div className="flex items-center gap-2 text-left pl-4">
-                        <span className="truncate max-w-[260px] text-slate-200 group-hover:text-cyan-200 transition-colors font-semibold" title={node.endpointDomain}>
-                          {node.endpointDomain}
-                        </span>
-                        <button
-                          onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
-                          className="text-slate-500 hover:text-cyan-300 p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                          title="复制 Endpoint"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Column 3: Endpoint (Centered block with internal left alignment) */}
+                      <div className="flex justify-center">
+                        <div className="flex items-center justify-between gap-2 w-[240px]">
+                          <span className="truncate text-slate-200 group-hover:text-cyan-200 transition-colors font-semibold" title={node.endpointDomain}>
+                            {node.endpointDomain}
+                          </span>
+                          <button
+                            onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
+                            className="text-slate-500 hover:text-cyan-300 p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                            title="复制 Endpoint"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Column 4: MTU (Centered) */}
