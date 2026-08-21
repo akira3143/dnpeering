@@ -74,13 +74,13 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
           <div className="overflow-x-auto">
             <div className="min-w-[860px]">
               
-              {/* Table Header */}
-              <div className="grid grid-cols-[2.4fr_1fr_2.4fr_1fr_1.4fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
-                <div className="text-left pl-1">节点名称 / 代号</div>
-                <div className="text-left pl-1">状态</div>
-                <div className="text-left pl-1">WireGuard Endpoint</div>
+              {/* Table Header (Centered columns matching MTU) */}
+              <div className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
+                <div className="text-left pl-2">节点名称 / 代号</div>
+                <div className="text-center">状态</div>
+                <div className="text-center">WireGuard Endpoint</div>
                 <div className="text-center">推荐 MTU</div>
-                <div className="text-right pr-1">操作</div>
+                <div className="text-center">操作</div>
               </div>
 
               {/* Table Body Rows */}
@@ -90,10 +90,10 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                   return (
                     <div
                       key={node.id}
-                      className="grid grid-cols-[2.4fr_1fr_2.4fr_1fr_1.4fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
+                      className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
                     >
-                      {/* Column 1: Node Name & Code */}
-                      <div className="flex items-center gap-3.5 text-left pl-1">
+                      {/* Column 1: Node Name & Code (Left-aligned) */}
+                      <div className="flex items-center gap-3.5 text-left pl-2 min-w-0">
                         <span className="text-xl sm:text-2xl shrink-0 select-none">{node.flag}</span>
                         <div className="min-w-0">
                           <div className="font-sans font-semibold text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
@@ -109,8 +109,8 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         </div>
                       </div>
 
-                      {/* Column 2: Status */}
-                      <div className="flex items-center text-left pl-1">
+                      {/* Column 2: Status (Centered) */}
+                      <div className="flex items-center justify-center">
                         {userSession ? (
                           <button
                             onClick={() => setIsDashboardOpen(true)}
@@ -130,8 +130,8 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         )}
                       </div>
 
-                      {/* Column 3: Endpoint */}
-                      <div className="flex items-center gap-2 text-left pl-1">
+                      {/* Column 3: Endpoint (Centered) */}
+                      <div className="flex items-center justify-center gap-2">
                         <span className="truncate max-w-[260px] text-slate-200 group-hover:text-cyan-200 transition-colors font-semibold" title={node.endpointDomain}>
                           {node.endpointDomain}
                         </span>
@@ -144,15 +144,15 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         </button>
                       </div>
 
-                      {/* Column 4: MTU */}
+                      {/* Column 4: MTU (Centered) */}
                       <div className="text-center">
                         <span className="font-mono text-slate-300 font-bold text-xs bg-black/40 px-2.5 py-1 rounded-lg border border-white/5 inline-block">
                           {node.mtu}
                         </span>
                       </div>
 
-                      {/* Column 5: Action */}
-                      <div className="flex items-center justify-end text-right pr-1">
+                      {/* Column 5: Action (Centered) */}
+                      <div className="flex items-center justify-center">
                         <button
                           onClick={() => {
                             if (onSelectNode) onSelectNode(node.id);
