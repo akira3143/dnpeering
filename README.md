@@ -54,6 +54,21 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/ins
 | **`dnp r`** | `dnp restart` | 重启门户服务 |
 | **`dnp u`** | `dnp update` | 从 GitHub 拉取最新版本并自动重新构建热升级 |
 | **`dnp e`** | `dnp env` | 快速编辑 `.env` 私密密钥与 Telegram Token |
+| **`dnp rm`** | `dnp uninstall` | 启动一键完全干净卸载与清理向导 |
+
+---
+
+### 🧹 一键干净卸载 (Uninstall)
+
+若在测试后需要彻底卸载清理服务器（自动停用注销 systemd、清理全局命令、删除安装目录）：
+
+```bash
+# 交互式向导卸载 (支持选择卸载 Portal、探针或全部清理)
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/uninstall.sh | sudo bash
+
+# 或静默彻底清理所有组件与数据:
+curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/uninstall.sh | sudo bash -s -- --all
+```
 
 ---
 

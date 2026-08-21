@@ -57,6 +57,14 @@ case "$1" in
     ${EDITOR:-nano} "${PORTAL_DIR}/.env"
     ;;
 
+  uninstall|rm)
+    if [ -f "${PORTAL_DIR}/scripts/uninstall.sh" ]; then
+      bash "${PORTAL_DIR}/scripts/uninstall.sh"
+    else
+      curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/uninstall.sh | bash
+    fi
+    ;;
+
   stop)
     echo -e "${RED}⏹️ 正在停止服务...${NC}"
     systemctl stop "${SERVICE_NAME}"
@@ -75,12 +83,13 @@ case "$1" in
     echo -e "${CYAN}==================================================================${NC}"
     echo -e "极简用法: ${GREEN}dnp <单字母或指令>${NC}"
     echo ""
-    echo -e "  ${YELLOW}dnp c${NC}  (config)   - 快速编辑节点与 ASN 统一配置 (保存即生效)"
-    echo -e "  ${YELLOW}dnp l${NC}  (logs)     - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
-    echo -e "  ${YELLOW}dnp s${NC}  (status)   - 查看服务运行状态与内存开销"
-    echo -e "  ${YELLOW}dnp r${NC}  (restart)  - 重启门户服务"
-    echo -e "  ${YELLOW}dnp u${NC}  (update)   - 一键拉取 GitHub 最新版本并自动重新构建"
-    echo -e "  ${YELLOW}dnp e${NC}  (env)      - 编辑 .env 私密密钥与 Telegram Token"
+    echo -e "  ${YELLOW}dnp c${NC}  (config)    - 快速编辑节点与 ASN 统一配置 (保存即生效)"
+    echo -e "  ${YELLOW}dnp l${NC}  (logs)      - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
+    echo -e "  ${YELLOW}dnp s${NC}  (status)    - 查看服务运行状态与内存开销"
+    echo -e "  ${YELLOW}dnp r${NC}  (restart)   - 重启门户服务"
+    echo -e "  ${YELLOW}dnp u${NC}  (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
+    echo -e "  ${YELLOW}dnp e${NC}  (env)       - 编辑 .env 私密密钥与 Telegram Token"
+    echo -e "  ${YELLOW}dnp rm${NC} (uninstall) - 干净卸载与清理"
     echo ""
     ;;
 esac
