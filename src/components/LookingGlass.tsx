@@ -426,7 +426,6 @@ export const LookingGlass: React.FC = () => {
                     key={i}
                     onClick={() => {
                       setTargetInput(chip.value);
-                      handleExecuteQuery(selectedNodeId, commandType, chip.value);
                     }}
                     className="px-2.5 py-1 rounded-lg bg-black/40 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition-all cursor-pointer"
                   >

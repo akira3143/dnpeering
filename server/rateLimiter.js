@@ -119,3 +119,54 @@ export function recordSubmission(ip, asn) {
     asnRequests.set(cleanAsn, history);
   }
 }
+
+// ------------------------------------------------------------------------------
+// Dedicated Looking Glass Rate Limiter (Smooth, high-throughput interactive limit)
+// ------------------------------------------------------------------------------
+const lgIpRequests = new Map();
+const LG_WINDOW_MS = 60 * 1000; // 1 minute
+const LG_MAX_REQUESTS = 30; // 30 queries per minute
+const LG_MIN_INTERVAL_MS = 500; // 500ms between requests
+
+export function checkLgRateLimit(ip) {
+  const now = Date.now();
+  const cleanIp = String(ip || 'unknown').trim();
+  if (!cleanIp || cleanIp === 'unknown') return { allowed: true };
+
+  const history = (lgIpRequests.get(cleanIp) || []).filter(t => now - t < LG_WINDOW_MS);
+
+  if (history.length > 0) {
+    const lastTime = history[history.length - 1];
+    const elapsed = now - lastTime;
+    if (elapsed < LG_MIN_INTERVAL_MS) {
+      return {
+        allowed: false,
+        message: '诊断请求过于频繁，请稍候 1 秒后再试。',
+        retryAfter: 1,
+      };
+    }
+  }
+
+  if (history.length >= LG_MAX_REQUESTS) {
+    const oldest = history[0];
+    const retryAfter = Math.ceil((LG_WINDOW_MS - (now - oldest)) / 1000);
+    return {
+      allowed: false,
+      message: `Looking Glass 诊断每分钟上限为 ${LG_MAX_REQUESTS} 次，请等待 ${retryAfter} 秒后再试。`,
+      retryAfter,
+    };
+  }
+
+  return { allowed: true };
+}
+
+export function recordLgQuery(ip) {
+  const now = Date.now();
+  const cleanIp = String(ip || 'unknown').trim();
+  if (cleanIp && cleanIp !== 'unknown') {
+    const history = (lgIpRequests.get(cleanIp) || []).filter(t => now - t < LG_WINDOW_MS);
+    history.push(now);
+    lgIpRequests.set(cleanIp, history);
+  }
+}
+
