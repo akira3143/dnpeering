@@ -187,14 +187,22 @@ elif command -v apk &>/dev/null; then
   apk add --no-cache curl tar iproute2 wireguard-tools >/dev/null 2>&1 || true
 fi
 
-# 5. 架构检测 (x86_64 / arm64)
+BIRD_LG_VER="v1.4.8"
+
+# 5. 架构检测 (x86_64 / arm64 / arm / 386)
 ARCH=$(uname -m)
 case "$ARCH" in
   x86_64|amd64)
-    BIN_ARCH="linux_amd64"
+    BIN_ARCH="linux-amd64"
     ;;
   aarch64|arm64)
-    BIN_ARCH="linux_arm64"
+    BIN_ARCH="linux-arm64"
+    ;;
+  armv7l|armhf|arm)
+    BIN_ARCH="linux-arm"
+    ;;
+  i386|i686)
+    BIN_ARCH="linux-386"
     ;;
   *)
     echo -e "${RED}❌ 抱歉，不支持的 CPU 架构: ${ARCH}${NC}"
@@ -202,15 +210,31 @@ case "$ARCH" in
     ;;
 esac
 
-# 6. 下载 bird-lgproxy 官方预编译二进制
-DOWNLOAD_URL="https://github.com/xddxdd/bird-lg-go/releases/download/${BIRD_LG_VER}/bird-lgproxy_${BIN_ARCH}"
-echo -e "${CYAN}⬇️  正在下载探针可执行文件 (${BIN_ARCH})...${NC}"
+# 6. 下载并解压 bird-lgproxy 官方预编译归档包
+TAR_NAME="bird-lgproxy-go-${BIRD_LG_VER}-${BIN_ARCH}.tar.gz"
+DOWNLOAD_URL="https://github.com/xddxdd/bird-lg-go/releases/download/${BIRD_LG_VER}/${TAR_NAME}"
+TEMP_DIR=$(mktemp -d)
 
-if ! curl -sSL --connect-timeout 10 "$DOWNLOAD_URL" -o /usr/local/bin/bird-lgproxy; then
-  echo -e "${YELLOW}⚠️  官方源直连受限，自动切换为镜像源...${NC}"
-  curl -sSL "https://ghproxy.com/${DOWNLOAD_URL}" -o /usr/local/bin/bird-lgproxy || true
+echo -e "${CYAN}⬇️  正在下载探针发布包 (${TAR_NAME})...${NC}"
+
+if ! curl -sSL --connect-timeout 10 "$DOWNLOAD_URL" -o "${TEMP_DIR}/${TAR_NAME}"; then
+  echo -e "${YELLOW}⚠️  官方源直连受限，自动切换为加速镜像源...${NC}"
+  curl -sSL "https://ghproxy.com/${DOWNLOAD_URL}" -o "${TEMP_DIR}/${TAR_NAME}" || true
 fi
 
+# 解压并提取二进制文件
+echo -e "${CYAN}📦 正在解压并安装探针可执行文件...${NC}"
+tar -xzf "${TEMP_DIR}/${TAR_NAME}" -C "${TEMP_DIR}"
+
+if [ -f "${TEMP_DIR}/bird-lgproxy-go" ]; then
+  mv "${TEMP_DIR}/bird-lgproxy-go" /usr/local/bin/bird-lgproxy
+elif [ -f "${TEMP_DIR}/bird-lgproxy" ]; then
+  mv "${TEMP_DIR}/bird-lgproxy" /usr/local/bin/bird-lgproxy
+else
+  find "${TEMP_DIR}" -maxdepth 2 -type f -perm -111 -exec mv {} /usr/local/bin/bird-lgproxy \; 2>/dev/null || true
+fi
+
+rm -rf "${TEMP_DIR}"
 chmod +x /usr/local/bin/bird-lgproxy
 echo -e "${GREEN}✅ 二进制文件安装成功: /usr/local/bin/bird-lgproxy${NC}"
 
