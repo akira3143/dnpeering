@@ -4,6 +4,7 @@
  * Supports route lookup, ping, traceroute, protocols summary, and BIRD health diagnostics
  */
 
+import { execFileSync } from 'child_process';
 import './env.js';
 import { getActiveConfig } from './configLoader.js';
 
@@ -103,7 +104,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
       } else {
         birdCommand = `show route for ${cleanTarget} all`;
       }
-      requestPath = `/raw?q=${encodeURIComponent(birdCommand)}`;
+      requestPath = `/bird?q=${encodeURIComponent(birdCommand)}`;
       break;
     }
     case 'ping': {
@@ -119,7 +120,39 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
       }
       const count = Math.min(10, Math.max(1, parseInt(options.count, 10) || 4));
       birdCommand = `ping -c ${count} ${cleanTarget}`;
-      requestPath = `/ping?q=${encodeURIComponent(cleanTarget)}&count=${count}`;
+
+      // If querying local node, execute native system ping for authentic real-time network measurements
+      if (cleanNode === 'jp07' || proxyUrl.includes('127.0.0.1') || proxyUrl.includes('localhost')) {
+        try {
+          const isWindows = process.platform === 'win32';
+          const pingArgs = isWindows
+            ? ['-n', String(count), '-w', '1000', cleanTarget]
+            : ['-c', String(count), '-W', '2', cleanTarget];
+          const pingOutput = execFileSync('ping', pingArgs, { encoding: 'utf8', timeout: 8000 });
+          return {
+            success: true,
+            isLive: true,
+            isMock: false,
+            nodeId: cleanNode,
+            command: birdCommand,
+            output: pingOutput.trim(),
+            durationMs: Date.now() - startTime,
+          };
+        } catch (err) {
+          if (err && err.stdout) {
+            return {
+              success: true,
+              isLive: true,
+              isMock: false,
+              nodeId: cleanNode,
+              command: birdCommand,
+              output: err.stdout.toString().trim(),
+              durationMs: Date.now() - startTime,
+            };
+          }
+        }
+      }
+      requestPath = `/traceroute?q=${encodeURIComponent(cleanTarget)}`;
       isSystemCommand = true;
       break;
     }
@@ -141,22 +174,22 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
     }
     case 'protocols': {
       birdCommand = cleanTarget ? `show protocols all ${cleanTarget}` : 'show protocols all';
-      requestPath = `/raw?q=${encodeURIComponent(birdCommand)}`;
+      requestPath = `/bird?q=${encodeURIComponent(birdCommand)}`;
       break;
     }
     case 'status': {
       birdCommand = 'show status';
-      requestPath = `/raw?q=${encodeURIComponent(birdCommand)}`;
+      requestPath = `/bird?q=${encodeURIComponent(birdCommand)}`;
       break;
     }
     case 'memory': {
       birdCommand = 'show memory';
-      requestPath = `/raw?q=${encodeURIComponent(birdCommand)}`;
+      requestPath = `/bird?q=${encodeURIComponent(birdCommand)}`;
       break;
     }
     case 'symbols': {
       birdCommand = cleanTarget ? `show symbols ${cleanTarget}` : 'show symbols';
-      requestPath = `/raw?q=${encodeURIComponent(birdCommand)}`;
+      requestPath = `/bird?q=${encodeURIComponent(birdCommand)}`;
       break;
     }
   }
