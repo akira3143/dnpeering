@@ -269,9 +269,12 @@ export const LookingGlass: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-                        <CountryFlag flag={node.flag} code={node.code} country={node.country} className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm" />
-                      </div>
+                      <CountryFlag
+                        flag={node.flag}
+                        code={node.code}
+                        country={node.country}
+                        className="w-7 h-5 object-cover rounded-[3px] shadow-md border border-white/10 shrink-0"
+                      />
                       <div>
                         <div className="text-xs font-bold font-sans flex items-center gap-1.5">
                           <span>{node.code}</span>

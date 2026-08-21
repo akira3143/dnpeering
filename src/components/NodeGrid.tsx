@@ -94,10 +94,13 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                       className={`grid grid-cols-[3fr_1.2fr_2.5fr_1fr_1.2fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-all duration-200 group border-b border-white/[0.04] last:border-0 ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'}`}
                     >
                       {/* Column 1: Node Name & Code */}
-                      <div className="flex items-center gap-4 pl-2 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-                          <CountryFlag flag={node.flag} code={node.code} country={node.country} className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm" />
-                        </div>
+                      <div className="flex items-center gap-3.5 pl-2 min-w-0">
+                        <CountryFlag
+                          flag={node.flag}
+                          code={node.code}
+                          country={node.country}
+                          className="w-7 h-5 object-cover rounded-[3px] shadow-md border border-white/10 shrink-0"
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="font-sans font-semibold text-sm text-slate-100 group-hover:text-cyan-300 transition-colors truncate">
                             {node.name}
