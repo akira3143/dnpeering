@@ -172,6 +172,9 @@ if [ "$INTERACTIVE" = true ]; then
     INPUT_NODE_ID=""
     prompt_user "请输入主站地址 (如 https://dn42.yourdomain.com): " INPUT_CORE_URL ""
     CORE_URL="${INPUT_CORE_URL%/}"
+    if [ -n "$CORE_URL" ] && [[ "$CORE_URL" != http://* ]] && [[ "$CORE_URL" != https://* ]]; then
+      CORE_URL="http://${CORE_URL}"
+    fi
     prompt_user "请输入本节点的 ID 代号 (与 portal.config.yaml 保持一致，如 us01): " INPUT_NODE_ID ""
     NODE_ID="${INPUT_NODE_ID:-}"
   fi
