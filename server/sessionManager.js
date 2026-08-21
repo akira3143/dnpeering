@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getUnifiedOccupiedPorts } from './portScanner.js';
+import { scanBaselineExistingPorts } from './portScanner.js';
+import { getActiveConfig } from './configLoader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,47 @@ const PORT_LEDGER_FILE = path.join(DATA_DIR, 'port_ledger.json');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+
+/**
+ * Baseline scan executed ONCE on server startup
+ * Silently imports pre-existing WireGuard ports into port_ledger.json without overwriting
+ */
+export function initPortLedgerWithBaselineScan(defaultNodeId = 'jp07') {
+  try {
+    const portLedger = loadJson(PORT_LEDGER_FILE, {});
+    if (!portLedger[defaultNodeId]) {
+      portLedger[defaultNodeId] = {};
+    }
+
+    const baselinePorts = scanBaselineExistingPorts();
+    let updated = false;
+
+    for (const item of baselinePorts) {
+      const portKey = String(item.port);
+      if (!portLedger[defaultNodeId][portKey]) {
+        portLedger[defaultNodeId][portKey] = {
+          label: item.label,
+          port: item.port,
+          type: 'in_use',
+          status: 'existing',
+          name: item.name,
+          source: item.source,
+          scannedAt: new Date().toISOString(),
+        };
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      saveJson(PORT_LEDGER_FILE, portLedger);
+    }
+  } catch (err) {
+    console.error('Error during baseline port scan:', err);
+  }
+}
+
+// Silently perform baseline scan on initial server startup
+initPortLedgerWithBaselineScan('jp07');
 
 // Helper to safely load JSON
 function loadJson(filePath, defaultValue = {}) {
@@ -85,21 +127,55 @@ function computeDiff(oldData, newData) {
 }
 
 /**
- * Retrieves all occupied ports for a specific node (merging ledger, config, and live kernel WireGuard ports)
+ * Retrieves all occupied (locked or in-use) ports for a specific node
  * @param {string} nodeId 
  * @returns {number[]}
  */
 export function getOccupiedPortsForNode(nodeId) {
+  const cleanId = String(nodeId || 'jp07').toLowerCase().trim();
   const portLedger = loadJson(PORT_LEDGER_FILE, {});
-  const nodePorts = portLedger[nodeId] || {};
-  const ledgerPorts = Object.keys(nodePorts).map(p => parseInt(p, 10)).filter(p => !isNaN(p));
-  return getUnifiedOccupiedPorts(nodeId, ledgerPorts);
+  const nodePorts = portLedger[cleanId] || {};
+  
+  const occupiedSet = new Set();
+  
+  // 1. Read from port_ledger.json
+  for (const [portStr] of Object.entries(nodePorts)) {
+    const p = parseInt(portStr, 10);
+    if (!isNaN(p)) occupiedSet.add(p);
+  }
+
+  // 2. Read from portal.config.yaml (if any declared in config)
+  try {
+    const activeCfg = getActiveConfig();
+    if (activeCfg && Array.isArray(activeCfg.nodes)) {
+      const matched = activeCfg.nodes.find((n) => n.id === cleanId);
+      if (matched && Array.isArray(matched.occupiedPorts)) {
+        matched.occupiedPorts.forEach((p) => {
+          const num = parseInt(p, 10);
+          if (!isNaN(num)) occupiedSet.add(num);
+        });
+      }
+    }
+  } catch {}
+
+  return Array.from(occupiedSet).sort((a, b) => a - b);
+}
+
+/**
+ * Gets detailed port ledger separating locked vs in_use ports
+ * @param {string} nodeId 
+ */
+export function getDetailedPortLedger(nodeId) {
+  const cleanId = String(nodeId || 'jp07').toLowerCase().trim();
+  const portLedger = loadJson(PORT_LEDGER_FILE, {});
+  return portLedger[cleanId] || {};
 }
 
 /**
  * Allocates or re-allocates a port in the port ledger
+ * Clearly marks type as 'locked' (pending review) vs 'in_use' (active session)
  */
-function updatePortLedger(nodeId, sessionId, asn, newPort, oldPort) {
+export function updatePortLedger(nodeId, sessionId, asn, newPort, oldPort, peerName = '', portType = 'locked', status = 'pending_review') {
   const portLedger = loadJson(PORT_LEDGER_FILE, {});
   if (!portLedger[nodeId]) {
     portLedger[nodeId] = {};
@@ -110,13 +186,22 @@ function updatePortLedger(nodeId, sessionId, asn, newPort, oldPort) {
     delete portLedger[nodeId][oldPort];
   }
 
-  // Claim new port
+  // Claim new port with standard human-friendly format "服务器或wg隧道名 + 端口号"
   if (newPort) {
+    const cleanAsn = String(asn || '').replace(/\D/g, '');
+    const ifaceName = (peerName || `wg-peer-${cleanAsn || 'peer'}`).trim();
+    const isLocked = portType === 'locked' || status === 'pending_review';
+    
     portLedger[nodeId][newPort] = {
+      label: `${ifaceName} : ${newPort}`,
+      port: Number(newPort),
+      type: isLocked ? 'locked' : 'in_use', // 'locked' vs 'in_use'
+      status: status || (isLocked ? 'pending_review' : 'active'),
+      name: ifaceName,
+      asn: cleanAsn,
       sessionId,
-      asn: String(asn),
-      allocatedAt: new Date().toISOString(),
-      status: 'allocated',
+      updatedAt: new Date().toISOString(),
+      source: 'peer_application',
     };
   }
 
@@ -193,7 +278,17 @@ export function savePeeringSession(payload, clientIp) {
     };
 
     sessions[existingSession.id] = session;
-    updatePortLedger(nodeId, existingSession.id, cleanAsn, newPort, oldPort);
+    const isSessionActive = session.status === 'active' || session.status === 'established';
+    updatePortLedger(
+      nodeId,
+      existingSession.id,
+      cleanAsn,
+      newPort,
+      oldPort,
+      payload.peerName || existingSession.peerName,
+      isSessionActive ? 'in_use' : 'locked',
+      session.status || 'pending_review'
+    );
   } else {
     // CREATE NEW SESSION
     isNew = true;
@@ -216,13 +311,23 @@ export function savePeeringSession(payload, clientIp) {
           version: 1,
           timestamp: now,
           clientIp,
-          diffs: ['• 首次提交对等互联申请'],
+          diffs: ['• 首次提交对等互联申请 (端口已锁定)'],
         },
       ],
     };
 
     sessions[sessionId] = session;
-    updatePortLedger(nodeId, sessionId, cleanAsn, newPort, null);
+    // Lock the port immediately upon submission!
+    updatePortLedger(
+      nodeId,
+      sessionId,
+      cleanAsn,
+      newPort,
+      null,
+      payload.peerName,
+      'locked',
+      'pending_review'
+    );
   }
 
   saveJson(SESSIONS_FILE, sessions);
@@ -335,3 +440,41 @@ export function deleteSession(sessionId, asn, nodeId) {
     session,
   };
 }
+
+/**
+ * Updates a session status and updates the corresponding port to 'in_use' (active) or releases it
+ * @param {string} sessionId 
+ * @param {'active'|'established'|'rejected'|'revoked'|'pending_review'} newStatus 
+ */
+export function updateSessionStatus(sessionId, newStatus) {
+  const sessions = loadJson(SESSIONS_FILE, {});
+  const session = sessions[sessionId];
+  if (!session) return false;
+
+  session.status = newStatus;
+  session.updatedAt = new Date().toISOString();
+  sessions[sessionId] = session;
+  saveJson(SESSIONS_FILE, sessions);
+
+  if (session.nodeId && session.hostPort) {
+    if (newStatus === 'active' || newStatus === 'established') {
+      // Transition from 'locked' to 'in_use'
+      updatePortLedger(
+        session.nodeId,
+        session.id,
+        session.asn,
+        session.hostPort,
+        null,
+        session.peerName,
+        'in_use',
+        'active'
+      );
+    } else if (newStatus === 'rejected' || newStatus === 'revoked') {
+      // Release port
+      updatePortLedger(session.nodeId, session.id, session.asn, null, session.hostPort);
+    }
+  }
+
+  return true;
+}
+

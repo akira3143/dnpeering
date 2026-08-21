@@ -51,8 +51,10 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/ins
 | **`dnp c`** | `dnp config` | 快速编辑节点与 ASN 统一配置（保存即全站生效，无需重启） |
 | **`dnp l`** | `dnp logs` | 查看实时滚动运行日志（谁在查 LG、谁在申请 Peer） |
 | **`dnp s`** | `dnp status` | 查看服务运行状态与内存占用 |
+| **`dnp p`** | `dnp ports` | 查看已使用与已锁定端口明细清单 |
 | **`dnp r`** | `dnp restart` | 重启门户服务 |
 | **`dnp u`** | `dnp update` | 从 GitHub 拉取最新版本并自动重新构建热升级 |
+| **`dnp scan`** | `dnp scan` | 重新执行一次系统 WireGuard 端口基线扫描 |
 | **`dnp e`** | `dnp env` | 快速编辑 `.env` 私密密钥与 Telegram Token |
 | **`dnp rm`** | `dnp uninstall` | 启动一键完全干净卸载与清理向导 |
 

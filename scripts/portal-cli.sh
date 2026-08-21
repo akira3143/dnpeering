@@ -57,6 +57,35 @@ case "$1" in
     ${EDITOR:-nano} "${PORTAL_DIR}/.env"
     ;;
 
+  p|port|ports)
+    echo -e "${CYAN}📊 正在读取当前端口占用与锁定账本 (${PORTAL_DIR}/server/data/port_ledger.json)...${NC}"
+    if [ -f "${PORTAL_DIR}/server/data/port_ledger.json" ]; then
+      node -e "
+        const fs = require('fs');
+        const file = '${PORTAL_DIR}/server/data/port_ledger.json';
+        const data = JSON.parse(fs.readFileSync(file, 'utf-8') || '{}');
+        console.log('');
+        for (const [nodeId, ports] of Object.entries(data)) {
+          console.log('\x1b[36m=== 节点: ' + nodeId.toUpperCase() + ' ===\x1b[0m');
+          const entries = Object.values(ports);
+          if (entries.length === 0) {
+            console.log('  (暂无端口占用记录)');
+          } else {
+            for (const item of entries) {
+              const tag = item.type === 'locked' 
+                ? '\x1b[33m[🔒已锁定/申请中]\x1b[0m' 
+                : '\x1b[32m[🟢已使用/活跃]\x1b[0m';
+              console.log('  ' + tag + ' ' + item.label + (item.asn ? ' (ASN: AS' + item.asn + ')' : ''));
+            }
+          }
+          console.log('');
+        }
+      " 2>/dev/null || cat "${PORTAL_DIR}/server/data/port_ledger.json"
+    else
+      echo -e "${YELLOW}暂无端口账本文件。${NC}"
+    fi
+    ;;
+
   scan|scan-ports)
     echo -e "${CYAN}🔍 正在深度扫描本机已有的 WireGuard 隧道与监听端口...${NC}"
     echo ""
@@ -109,9 +138,10 @@ case "$1" in
     echo -e "  ${YELLOW}dnp c${NC}    (config)    - 快速编辑节点与 ASN 统一配置 (保存即生效)"
     echo -e "  ${YELLOW}dnp l${NC}    (logs)      - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
     echo -e "  ${YELLOW}dnp s${NC}    (status)    - 查看服务运行状态与内存开销"
+    echo -e "  ${YELLOW}dnp p${NC}    (ports)     - 查看已使用与已锁定端口明细清单"
     echo -e "  ${YELLOW}dnp r${NC}    (restart)   - 重启门户服务"
     echo -e "  ${YELLOW}dnp u${NC}    (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
-    echo -e "  ${YELLOW}dnp scan${NC} (ports)     - 扫描检测本机所有已存 WireGuard 隧道与监听端口"
+    echo -e "  ${YELLOW}dnp scan${NC} (scan)      - 重新执行一次系统 WireGuard 端口基线扫描"
     echo -e "  ${YELLOW}dnp e${NC}    (env)       - 编辑 .env 私密密钥与 Telegram Token"
     echo -e "  ${YELLOW}dnp rm${NC}   (uninstall) - 干净卸载与清理"
     echo ""
