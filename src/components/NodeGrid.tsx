@@ -70,17 +70,17 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
         </div>
 
         {/* Table / List View */}
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+        <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black/20">
           <div className="overflow-x-auto">
-            <div className="min-w-[820px]">
+            <div className="min-w-[860px]">
               
               {/* Table Header */}
-              <div className="grid grid-cols-[2.6fr_0.9fr_2.2fr_0.7fr_1fr] items-center px-6 py-3.5 bg-gradient-to-r from-white/[0.03] to-transparent border-b border-white/[0.08] text-slate-500 text-[11px] uppercase tracking-[0.08em] font-sans select-none">
-                <div className="pl-1">节点名称 / 代号</div>
+              <div className="grid grid-cols-[3fr_1.2fr_2.5fr_1fr_1.2fr] items-center px-6 py-3.5 bg-white/[0.02] border-b border-white/[0.06] text-slate-400 text-[11px] uppercase tracking-widest font-sans select-none font-medium">
+                <div className="pl-2">节点名称 / 代号</div>
                 <div className="text-center">状态</div>
-                <div className="text-center">WireGuard Endpoint</div>
+                <div className="text-left pl-2">WireGuard Endpoint</div>
                 <div className="text-center">MTU</div>
-                <div className="text-center">操作</div>
+                <div className="text-right pr-2">操作</div>
               </div>
 
               {/* Table Body Rows */}
@@ -90,21 +90,23 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                   return (
                     <div
                       key={node.id}
-                      className={`grid grid-cols-[2.6fr_0.9fr_2.2fr_0.7fr_1fr] items-center px-6 py-4 hover:bg-cyan-500/[0.04] transition-all duration-200 group border-b border-white/[0.04] ${idx % 2 === 0 ? 'bg-white/[0.01]' : ''}`}
+                      className={`grid grid-cols-[3fr_1.2fr_2.5fr_1fr_1.2fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-all duration-200 group border-b border-white/[0.04] last:border-0 ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'}`}
                     >
                       {/* Column 1: Node Name & Code */}
-                      <div className="flex items-center gap-3.5 pl-1 min-w-0">
-                        <span className="text-xl shrink-0 select-none">{node.flag}</span>
+                      <div className="flex items-center gap-4 pl-2 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
+                          <span className="text-sm select-none">{node.flag}</span>
+                        </div>
                         <div className="min-w-0 flex-1">
-                          <div className="font-sans font-semibold text-sm text-white/90 group-hover:text-cyan-300 transition-colors truncate">
+                          <div className="font-sans font-semibold text-sm text-slate-100 group-hover:text-cyan-300 transition-colors truncate">
                             {node.name}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
-                            <span className="text-cyan-400 font-bold">{node.code}</span>
-                            <span className="text-white/10">·</span>
+                          <div className="text-[11px] font-mono text-slate-500 mt-1 flex items-center gap-1.5 truncate">
+                            <span className="text-cyan-500 font-medium">{node.code}</span>
+                            <span className="text-slate-700">|</span>
                             <span>{node.city}</span>
-                            <span className="text-white/10">·</span>
-                            <span className="text-slate-600">{node.isp}</span>
+                            <span className="text-slate-700">|</span>
+                            <span>{node.isp}</span>
                           </div>
                         </div>
                       </div>
@@ -114,15 +116,15 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                         {userSession ? (
                           <button
                             onClick={() => setIsDashboardOpen(true)}
-                            className="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 flex items-center gap-1.5 text-[10px] hover:bg-emerald-900/80 transition-colors cursor-pointer"
+                            className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5 text-[10px] hover:bg-emerald-500/20 transition-colors cursor-pointer font-medium"
                             title="你在此节点已有对等互联会话，点击查看详情"
                           >
                             <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
                             <span>已互联</span>
                           </button>
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide ${
-                            node.status === 'active' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-medium tracking-wide ${
+                            node.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`}></span>
                             <span>{node.status === 'active' ? 'ACTIVE' : 'MAINT'}</span>
@@ -131,13 +133,13 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                       </div>
 
                       {/* Column 3: Endpoint */}
-                      <div className="flex items-center justify-center gap-2">
-                        <code className="truncate text-slate-300 group-hover:text-cyan-200 transition-colors text-[12px] font-medium" title={node.endpointDomain}>
+                      <div className="flex items-center justify-start pl-2 gap-2">
+                        <code className="truncate text-slate-300 group-hover:text-cyan-200 transition-colors text-xs font-medium" title={node.endpointDomain}>
                           {node.endpointDomain}
                         </code>
                         <button
                           onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
-                          className="text-slate-600 hover:text-cyan-300 p-1 rounded-md hover:bg-white/10 transition-all cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
+                          className="text-slate-500 hover:text-cyan-300 p-1.5 rounded-md hover:bg-white/10 transition-all cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
                           title="复制 Endpoint"
                           aria-label="复制 Endpoint"
                         >
@@ -147,18 +149,18 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
 
                       {/* Column 4: MTU */}
                       <div className="text-center">
-                        <span className="font-mono text-slate-400 font-semibold text-[11px] bg-white/[0.04] px-2.5 py-1 rounded-md border border-white/[0.06] inline-block tabular-nums">
+                        <span className="font-mono text-slate-400 text-[11px] bg-black/40 px-3 py-1 rounded border border-white/5 inline-block tabular-nums shadow-inner">
                           {node.mtu}
                         </span>
                       </div>
 
                       {/* Column 5: Action */}
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-end pr-2">
                         <button
                           onClick={() => {
                             if (onSelectNode) onSelectNode(node.id);
                           }}
-                          className="btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-lg shadow-cyan-950/30 hover:shadow-cyan-500/20 transition-all"
+                          className="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 px-4 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-lg shadow-transparent hover:shadow-cyan-500/10"
                         >
                           <Terminal className="w-3.5 h-3.5" />
                           <span>发起 Peer</span>
