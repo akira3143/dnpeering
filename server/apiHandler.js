@@ -6,6 +6,7 @@ import {
   getSessionById,
   getSessionsByAsn,
   deleteSession,
+  mergeProbeReportedPorts,
 } from './sessionManager.js';
 import { getAsnIdentity } from './registrySync.js';
 import {
@@ -400,3 +401,26 @@ export function handleGetNetworkMeta() {
     },
   };
 }
+
+/**
+ * Handles POST /api/probe/report-ports
+ * Allows remote PoP probes to report their local WireGuard & socket port usages to the Core hub
+ */
+export function handleReportProbePorts(body, authHeader) {
+  if (!body || !body.nodeId || !Array.isArray(body.ports)) {
+    return { status: 400, data: { success: false, error: '缺少 nodeId 或 ports 列表' } };
+  }
+
+  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+  const configuredToken = process.env.PROBE_AUTH_TOKEN || process.env.AUTH_JWT_SECRET || 'dnpeering-secret';
+
+  // Verify auth token (support shared token or valid admin JWT)
+  const isTokenValid = token && (token === configuredToken || verifyJwt(token)?.isAdmin);
+  if (!isTokenValid) {
+    return { status: 401, data: { success: false, error: '探针上报凭据无效 (Unauthorized probe token)' } };
+  }
+
+  const result = mergeProbeReportedPorts(body.nodeId, body.ports);
+  return { status: 200, data: { success: true, ...result } };
+}
+

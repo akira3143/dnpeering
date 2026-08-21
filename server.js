@@ -20,6 +20,7 @@ import {
   handlePeerStatus,
   handleLookingGlassQuery,
   handleGetNetworkMeta,
+  handleReportProbePorts,
 } from './server/apiHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -191,7 +192,14 @@ const server = http.createServer(async (req, res) => {
     return sendJson(result.status, result.data);
   }
 
-  // 17. Health check route
+  // 17. API Route: POST /api/probe/report-ports (Remote Probe Port Reporting)
+  if (url.pathname === '/api/probe/report-ports' && req.method === 'POST') {
+    const parsed = await parseBody();
+    const result = handleReportProbePorts(parsed, req.headers.authorization);
+    return sendJson(result.status, result.data);
+  }
+
+  // 18. Health check route
   if (url.pathname === '/health' || url.pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'healthy', time: new Date().toISOString() }));

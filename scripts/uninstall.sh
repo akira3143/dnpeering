@@ -176,12 +176,20 @@ if [ "$UNINSTALL_PROBE" = true ]; then
         rm -f /etc/systemd/system/bird-lgproxy.service
     fi
 
+    # 停止并注销端口同步定时器与服务
+    if [ -f "/etc/systemd/system/dn42-probe-sync.timer" ] || [ -f "/etc/systemd/system/dn42-probe-sync.service" ]; then
+        echo "  • 停止并注销 dn42-probe-sync 端口上报定时器..."
+        systemctl stop dn42-probe-sync.timer >/dev/null 2>&1 || true
+        systemctl disable dn42-probe-sync.timer >/dev/null 2>&1 || true
+        rm -f /etc/systemd/system/dn42-probe-sync.timer /etc/systemd/system/dn42-probe-sync.service
+    fi
+
     # 删除二进制文件与环境变量配置
-    echo "  • 删除 /usr/local/bin/bird-lgproxy 二进制文件..."
-    rm -f /usr/local/bin/bird-lgproxy
+    echo "  • 删除 /usr/local/bin/bird-lgproxy 与 dnp-probe-report..."
+    rm -f /usr/local/bin/bird-lgproxy /usr/local/bin/dnp-probe-report
     rm -f /etc/bird-lgproxy.env
 
-    echo -e "${GREEN}✓ Looking Glass 探针清理完毕！${NC}"
+    echo -e "${GREEN}✓ Looking Glass 探针与端口同步服务清理完毕！${NC}"
 fi
 
 # 重载 systemd

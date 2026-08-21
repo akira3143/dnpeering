@@ -478,3 +478,47 @@ export function updateSessionStatus(sessionId, newStatus) {
   return true;
 }
 
+/**
+ * Merges reported ports from a remote probe into port_ledger.json
+ * @param {string} nodeId 
+ * @param {Array<{port: number, name?: string, label?: string, type?: string, status?: string}>} reportedPorts 
+ */
+export function mergeProbeReportedPorts(nodeId, reportedPorts = []) {
+  const cleanId = String(nodeId || '').toLowerCase().trim();
+  if (!cleanId || !Array.isArray(reportedPorts)) return { success: false, count: 0 };
+
+  const portLedger = loadJson(PORT_LEDGER_FILE, {});
+  if (!portLedger[cleanId]) {
+    portLedger[cleanId] = {};
+  }
+
+  let updatedCount = 0;
+  for (const item of reportedPorts) {
+    const portNum = parseInt(item.port, 10);
+    if (isNaN(portNum) || portNum < 10000 || portNum > 65535) continue;
+
+    const portKey = String(portNum);
+    const existing = portLedger[cleanId][portKey];
+
+    // If port is already locked by a pending user application, preserve the lock
+    if (existing && existing.type === 'locked') {
+      continue;
+    }
+
+    const ifaceName = (item.name || `wg-peer-${portNum}`).trim();
+    portLedger[cleanId][portKey] = {
+      label: item.label || `${ifaceName} : ${portNum}`,
+      port: portNum,
+      type: item.type || 'in_use',
+      status: item.status || 'existing',
+      name: ifaceName,
+      source: 'remote_probe',
+      reportedAt: new Date().toISOString(),
+    };
+    updatedCount++;
+  }
+
+  saveJson(PORT_LEDGER_FILE, portLedger);
+  return { success: true, count: updatedCount, nodeId: cleanId };
+}
+
