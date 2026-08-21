@@ -69,49 +69,47 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
           ))}
         </div>
 
-        {/* Table / List View (Pristine CSS Grid Layout) */}
+        {/* Table / List View */}
         <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
           <div className="overflow-x-auto">
-            <div className="min-w-[860px]">
+            <div className="min-w-[780px]">
               
-              {/* Table Header (All headers strictly centered) */}
-              <div className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-3.5 bg-black/60 border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider font-sans select-none font-semibold">
-                <div className="text-center">节点名称 / 代号</div>
+              {/* Table Header */}
+              <div className="grid grid-cols-[minmax(240px,2.8fr)_100px_minmax(200px,2.2fr)_80px_120px] items-center px-5 py-3 bg-black/60 border-b border-white/10 text-slate-500 text-[11px] uppercase tracking-wider font-sans select-none font-medium">
+                <div className="pl-2">节点名称 / 代号</div>
                 <div className="text-center">状态</div>
-                <div className="text-center">WIREGUARD ENDPOINT</div>
-                <div className="text-center">推荐 MTU</div>
+                <div className="text-center">Endpoint</div>
+                <div className="text-center">MTU</div>
                 <div className="text-center">操作</div>
               </div>
 
               {/* Table Body Rows */}
-              <div className="divide-y divide-white/5 font-mono text-xs">
-                {filteredNodes.map((node) => {
+              <div className="divide-y divide-white/[0.04] font-mono text-xs">
+                {filteredNodes.map((node, idx) => {
                   const userSession = activeSessions.find((s) => s.nodeId === node.id);
                   return (
                     <div
                       key={node.id}
-                      className="grid grid-cols-[2.5fr_1.2fr_2.5fr_1.2fr_1.6fr] items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group"
+                      className={`grid grid-cols-[minmax(240px,2.8fr)_100px_minmax(200px,2.2fr)_80px_120px] items-center px-5 py-3.5 hover:bg-white/[0.03] transition-colors group ${idx % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
                     >
-                      {/* Column 1: Node Name & Code (Centered block with internal left alignment) */}
-                      <div className="flex justify-center">
-                        <div className="flex items-center gap-3.5 text-left w-[260px] min-w-0">
-                          <span className="text-xl sm:text-2xl shrink-0 select-none">{node.flag}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-sans font-semibold text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
-                              {node.name}
-                            </div>
-                            <div className="text-[11px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
-                              <span className="text-cyan-400 font-bold">{node.code}</span>
-                              <span>&middot;</span>
-                              <span>{node.city}</span>
-                              <span>&middot;</span>
-                              <span>{node.isp}</span>
-                            </div>
+                      {/* Column 1: Node Name & Code */}
+                      <div className="flex items-center gap-3 pl-2 min-w-0">
+                        <span className="text-lg shrink-0 select-none leading-none">{node.flag}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-sans font-semibold text-[13px] text-white group-hover:text-cyan-300 transition-colors truncate leading-snug">
+                            {node.name}
+                          </div>
+                          <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
+                            <span className="text-cyan-400/80 font-semibold">{node.code}</span>
+                            <span className="text-slate-600">·</span>
+                            <span>{node.city}</span>
+                            <span className="text-slate-600">·</span>
+                            <span className="text-slate-500/80">{node.isp}</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Column 2: Status (Centered) */}
+                      {/* Column 2: Status */}
                       <div className="flex items-center justify-center">
                         {userSession ? (
                           <button
@@ -123,45 +121,44 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                             <span>已互联</span>
                           </button>
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] ${
-                            node.status === 'active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                            node.status === 'active' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
                           }`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span>ACTIVE</span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`}></span>
+                            <span>{node.status === 'active' ? 'ACTIVE' : 'MAINT'}</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Column 3: Endpoint (Centered block with internal left alignment) */}
-                      <div className="flex justify-center">
-                        <div className="flex items-center justify-between gap-2 w-[240px]">
-                          <span className="truncate text-slate-200 group-hover:text-cyan-200 transition-colors font-semibold" title={node.endpointDomain}>
-                            {node.endpointDomain}
-                          </span>
-                          <button
-                            onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
-                            className="text-slate-500 hover:text-cyan-300 p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                            title="复制 Endpoint"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                      {/* Column 3: Endpoint */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <code className="truncate text-slate-300 group-hover:text-cyan-200 transition-colors text-[12px]" title={node.endpointDomain}>
+                          {node.endpointDomain}
+                        </code>
+                        <button
+                          onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
+                          className="text-slate-600 hover:text-cyan-300 p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
+                          title="复制 Endpoint"
+                          aria-label="复制 Endpoint"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
                       </div>
 
-                      {/* Column 4: MTU (Centered) */}
+                      {/* Column 4: MTU */}
                       <div className="text-center">
-                        <span className="font-mono text-slate-300 font-bold text-xs bg-black/40 px-2.5 py-1 rounded-lg border border-white/5 inline-block">
+                        <span className="font-mono text-slate-400 text-xs tabular-nums">
                           {node.mtu}
                         </span>
                       </div>
 
-                      {/* Column 5: Action (Centered) */}
+                      {/* Column 5: Action */}
                       <div className="flex items-center justify-center">
                         <button
                           onClick={() => {
                             if (onSelectNode) onSelectNode(node.id);
                           }}
-                          className="btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-950/40"
+                          className="btn-primary px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-950/40"
                         >
                           <Terminal className="w-3.5 h-3.5" />
                           <span>发起 Peer</span>
