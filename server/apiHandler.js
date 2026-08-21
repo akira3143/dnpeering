@@ -21,6 +21,7 @@ import {
 } from './authService.js';
 import { queryPeerBgpStatus, executeLgCommand } from './lookingGlassService.js';
 import { getPublicNetworkData, loadUnifiedConfig } from './configLoader.js';
+import crypto from 'node:crypto';
 
 /**
  * Handles POST /api/submit-peering requests
@@ -412,10 +413,25 @@ export function handleReportProbePorts(body, authHeader) {
   }
 
   const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
-  const configuredToken = process.env.PROBE_AUTH_TOKEN || process.env.AUTH_JWT_SECRET || 'dnpeering-secret';
+  const configuredToken = process.env.PROBE_AUTH_TOKEN;
 
-  // Verify auth token (support shared token or valid admin JWT)
-  const isTokenValid = token && (token === configuredToken || verifyJwt(token)?.isAdmin);
+  // Require explicit PROBE_AUTH_TOKEN configuration
+  if (!configuredToken) {
+    return { status: 503, data: { success: false, error: '探针上报未配置 (PROBE_AUTH_TOKEN not set)' } };
+  }
+
+  // Verify auth token with timing-safe comparison, or accept valid admin JWT
+  let isTokenValid = false;
+  if (token && configuredToken && token.length === configuredToken.length) {
+    try {
+      isTokenValid = crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken));
+    } catch { isTokenValid = false; }
+  }
+  if (!isTokenValid) {
+    // Fallback: check if it's a valid admin JWT
+    isTokenValid = !!verifyJwt(token)?.isAdmin;
+  }
+
   if (!isTokenValid) {
     return { status: 401, data: { success: false, error: '探针上报凭据无效 (Unauthorized probe token)' } };
   }

@@ -307,7 +307,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [cooldownSeconds]);
+  }, [cooldownSeconds > 0]);
 
   // Handle In-App Direct Telegram Bot Submission
   const handleSubmitApplication = async () => {

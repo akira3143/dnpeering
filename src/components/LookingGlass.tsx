@@ -44,6 +44,7 @@ export const LookingGlass: React.FC = () => {
   const [historyResults, setHistoryResults] = useState<LgQueryResponse | null>(null);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const autoRunTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeNode = useMemo(() => {
     return nodes.find((n) => n.id === selectedNodeId) || nodes[0];
   }, [nodes, selectedNodeId]);
@@ -135,14 +136,18 @@ export const LookingGlass: React.FC = () => {
       }
 
       if (e.detail.autoRun) {
-        setTimeout(() => {
+        if (autoRunTimerRef.current) clearTimeout(autoRunTimerRef.current);
+        autoRunTimerRef.current = setTimeout(() => {
           handleExecuteQuery(e.detail.nodeId || selectedNodeId, e.detail.commandType || commandType, e.detail.target || targetInput);
         }, 300);
       }
     };
 
     window.addEventListener('akilab-open-looking-glass' as any, handleCustomTrigger as any);
-    return () => window.removeEventListener('akilab-open-looking-glass' as any, handleCustomTrigger as any);
+    return () => {
+      window.removeEventListener('akilab-open-looking-glass' as any, handleCustomTrigger as any);
+      if (autoRunTimerRef.current) clearTimeout(autoRunTimerRef.current);
+    };
   }, [selectedNodeId, commandType, targetInput, handleExecuteQuery]);
 
   // Keyboard shortcut: Enter to execute
@@ -382,6 +387,7 @@ export const LookingGlass: React.FC = () => {
                   <button
                     onClick={() => setTargetInput('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs cursor-pointer"
+                    aria-label="清空输入框"
                   >
                     ✕
                   </button>

@@ -329,6 +329,10 @@ export async function loadUnifiedConfig() {
 
   // 1. Try remote URL if configured
   if (remoteUrl) {
+    // Security: enforce HTTPS for remote configuration sources
+    if (!remoteUrl.startsWith('https://') && !remoteUrl.startsWith('http://127.0.0.1') && !remoteUrl.startsWith('http://localhost')) {
+      console.warn(`⚠️ [Config] Remote config URL must use HTTPS (got: ${remoteUrl}). Skipping remote load.`);
+    } else {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 6000);
@@ -350,6 +354,7 @@ export async function loadUnifiedConfig() {
     } catch (err) {
       console.warn(`⚠️ [Config] Failed to fetch remote config from ${remoteUrl}, falling back to local file:`, err.message);
     }
+    } // end HTTPS enforcement else block
   }
 
   // 2. Try local YAML file

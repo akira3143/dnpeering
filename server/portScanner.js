@@ -6,7 +6,7 @@
  * Standard format: "服务器或wg隧道名 + 端口号" (e.g., "wg-peer-4242421234 : 21234").
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -19,7 +19,7 @@ export function scanBaselineExistingPorts() {
 
   // 1. Scan via `wg show all listen-port` (Kernel WireGuard active interfaces)
   try {
-    const wgOutput = execSync('wg show all listen-port 2>/dev/null', { encoding: 'utf-8', timeout: 2000 });
+    const wgOutput = execFileSync('wg', ['show', 'all', 'listen-port'], { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] });
     const lines = wgOutput.trim().split('\n');
     for (const line of lines) {
       const parts = line.trim().split(/\s+/);

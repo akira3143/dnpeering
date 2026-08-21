@@ -12,6 +12,11 @@
 # ==============================================================================
 
 PORTAL_DIR="/opt/dnpeering"
+# Security: validate PORTAL_DIR exists and is a directory
+if [ ! -d "$PORTAL_DIR" ]; then
+  echo -e "\033[0;31m❌ 错误: 门户安装目录 ${PORTAL_DIR} 不存在，请先执行安装。\033[0m"
+  exit 1
+fi
 SERVICE_NAME="dn42-portal"
 
 GREEN='\033[0;32m'

@@ -254,6 +254,7 @@ export const MyPeeringsDashboard: React.FC = () => {
             <button
               onClick={() => setIsDashboardOpen(false)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer ml-1"
+              aria-label="关闭面板"
             >
               <X className="w-5 h-5" />
             </button>

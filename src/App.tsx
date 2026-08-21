@@ -10,6 +10,7 @@ import { PeerPage } from './pages/PeerPage';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { MyPeeringsDashboard } from './components/MyPeeringsDashboard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const AppContent: React.FC = () => {
   const { path } = useRouter();
@@ -59,17 +60,19 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <ToastProvider>
-      <RouterProvider>
-        <AuthProvider>
-          <NetworkProvider>
-            <PeeringProvider>
-              <AppContent />
-            </PeeringProvider>
-          </NetworkProvider>
-        </AuthProvider>
-      </RouterProvider>
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <RouterProvider>
+          <AuthProvider>
+            <NetworkProvider>
+              <PeeringProvider>
+                <AppContent />
+              </PeeringProvider>
+            </NetworkProvider>
+          </AuthProvider>
+        </RouterProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 };
 

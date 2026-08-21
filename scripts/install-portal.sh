@@ -86,7 +86,7 @@ echo -e "${CYAN}🔑 [5/7] 检查并初始化配置与环境安全密钥...${NC}
 # 6.1 检查 .env
 if [ ! -f "$PORTAL_DIR/.env" ]; then
     echo -e "${YELLOW}⚙️ 生成新的 .env 文件并生成安全 64 字节 JWT Secret...${NC}"
-    JWT_SECRET=$(openssl rand -hex 32)
+    JWT_SECRET=$(openssl rand -hex 64)
     cp "$PORTAL_DIR/.env.example" "$PORTAL_DIR/.env"
     sed -i "s|AUTH_JWT_SECRET=.*|AUTH_JWT_SECRET=${JWT_SECRET}|g" "$PORTAL_DIR/.env"
     sed -i "s|PORT=.*|PORT=${DEFAULT_PORT}|g" "$PORTAL_DIR/.env"
@@ -106,6 +106,9 @@ fi
 
 # 确保运行时数据目录权限正常
 mkdir -p "$PORTAL_DIR/server/data"
+# Create dedicated service user (if not exists)
+id -u dnpeering &>/dev/null || useradd -r -s /bin/false -d "$PORTAL_DIR" dnpeering
+chown -R dnpeering:dnpeering "$PORTAL_DIR/server/data"
 chmod 700 "$PORTAL_DIR/server/data"
 
 # 7. 配置 systemd 守护进程
@@ -118,7 +121,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=dnpeering
+Group=dnpeering
 WorkingDirectory=${PORTAL_DIR}
 ExecStart=${NODE_BIN} server.js
 Restart=always

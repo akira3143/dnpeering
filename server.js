@@ -22,6 +22,7 @@ import {
   handleGetNetworkMeta,
   handleReportProbePorts,
 } from './server/apiHandler.js';
+import { checkRateLimit, recordSubmission } from './server/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -179,10 +180,16 @@ const server = http.createServer(async (req, res) => {
     return sendJson(result.status, result.data);
   }
 
-  // 15. API Route: POST /api/looking-glass/query
+  // 15. API Route: POST /api/looking-glass/query (with rate limiting)
   if (url.pathname === '/api/looking-glass/query' && req.method === 'POST') {
+    const lgClientIp = (process.env.TRUST_PROXY === 'true' ? req.headers['x-forwarded-for'] : null) || req.socket.remoteAddress || '127.0.0.1';
+    const lgRateCheck = checkRateLimit(lgClientIp, 'lg-query');
+    if (!lgRateCheck.allowed) {
+      return sendJson(429, { success: false, error: lgRateCheck.message, retryAfter: lgRateCheck.retryAfter });
+    }
     const parsed = await parseBody();
     const result = await handleLookingGlassQuery(parsed);
+    recordSubmission(lgClientIp, 'lg-query');
     return sendJson(result.status, result.data);
   }
 

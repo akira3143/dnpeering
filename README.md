@@ -6,7 +6,7 @@ Personal DN42 peering management page and Looking Glass diagnostic portal.
 
 ### 简介
 
-个人自用的 DN42 自动化对等互联与 BGP 探测面板，主要功能包含：
+Vibe产物，个人自用的 DN42 自动化对等互联与 BGP 探测面板，主要功能包含：
 - 节点参数展示与 WireGuard / BIRD 配置文件一键生成
 - 基于 BIRD 2 Socket 与 bird-lgproxy 的 BGP 路由穿透查询、Ping 与 Traceroute
 - 基于 DN42 Registry 的 SSH 签名 / 邮箱 OTP 验真与会话管理
