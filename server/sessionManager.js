@@ -556,3 +556,76 @@ export function mergeProbeReportedPorts(nodeId, reportedPorts = []) {
   return { success: true, count: updatedCount, nodeId: cleanId };
 }
 
+const UNCONNECTED_EXPIRATION_DAYS = 7;
+const UNCONNECTED_EXPIRATION_MS = UNCONNECTED_EXPIRATION_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Automatically cleans up inactive / un-established sessions older than 7 days
+ * and releases their occupied ports back to the pool
+ * @param {number} [expirationMs] 
+ * @returns {Array<{sessionId: string, asn: string, nodeId: string, hostPort: number, reason: string}>}
+ */
+export function cleanupExpiredUnconnectedSessions(expirationMs = UNCONNECTED_EXPIRATION_MS) {
+  const sessions = loadJson(SESSIONS_FILE, {});
+  const portLedger = loadJson(PORT_LEDGER_FILE, {});
+  const now = Date.now();
+  const deletedSessions = [];
+
+  for (const [id, session] of Object.entries(sessions)) {
+    // If session is already established/active, it is permanent
+    const isEstablished = session.status === 'established' || session.status === 'active';
+    if (isEstablished) {
+      continue;
+    }
+
+    // Calculate age based on updatedAt or createdAt
+    const sessionTime = new Date(session.updatedAt || session.createdAt || 0).getTime();
+    const ageMs = now - sessionTime;
+
+    if (ageMs >= expirationMs) {
+      // Expired! Clean up session & release its port
+      const nodeId = session.nodeId || 'jp07';
+      const hostPort = session.hostPort;
+
+      // 1. Release port from port_ledger.json
+      if (nodeId && hostPort && portLedger[nodeId] && portLedger[nodeId][hostPort]) {
+        if (portLedger[nodeId][hostPort].sessionId === id || portLedger[nodeId][hostPort].asn === session.asn) {
+          delete portLedger[nodeId][hostPort];
+        }
+      }
+
+      // 2. Delete session
+      deletedSessions.push({
+        sessionId: id,
+        asn: session.asn,
+        nodeId,
+        hostPort,
+        peerName: session.peerName,
+        ageDays: Math.floor(ageMs / (24 * 60 * 60 * 1000)),
+        reason: `超过 ${UNCONNECTED_EXPIRATION_DAYS} 天未建立 BGP 会话`,
+      });
+
+      delete sessions[id];
+    }
+  }
+
+  if (deletedSessions.length > 0) {
+    saveJson(SESSIONS_FILE, sessions);
+    saveJson(PORT_LEDGER_FILE, portLedger);
+    console.log(`🧹 [自动清理] 已自动清理 ${deletedSessions.length} 个超过 ${UNCONNECTED_EXPIRATION_DAYS} 天未连通的会话并释放端口:`, deletedSessions.map(s => `${s.sessionId} (AS${s.asn})`).join(', '));
+  }
+
+  return deletedSessions;
+}
+
+// Perform automated session expiry cleanup on startup and schedule periodic check every 6 hours
+try {
+  cleanupExpiredUnconnectedSessions();
+  setInterval(() => {
+    cleanupExpiredUnconnectedSessions();
+  }, 6 * 60 * 60 * 1000);
+} catch (err) {
+  console.error('Error scheduling session cleanup:', err);
+}
+
+

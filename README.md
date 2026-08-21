@@ -55,6 +55,7 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/ins
 | **`dnp r`** | `dnp restart` | 重启门户服务 |
 | **`dnp u`** | `dnp update` | 从 GitHub 拉取最新版本并自动重新构建热升级 |
 | **`dnp scan`** | `dnp scan` | 重新执行一次系统 WireGuard 端口基线扫描 |
+| **`dnp clean`** | `dnp clean` | 扫描并清理超过 7 天未建立会话并释放端口 |
 | **`dnp e`** | `dnp env` | 快速编辑 `.env` 私密密钥与 Telegram Token |
 | **`dnp rm`** | `dnp uninstall` | 启动一键完全干净卸载与清理向导 |
 
