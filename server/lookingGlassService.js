@@ -195,6 +195,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
   }
 
   // Attempt live query to bird-lgproxy
+  let fetchError = null;
   try {
     const timeoutMs = isSystemCommand ? 12000 : 5000;
     const controller = new AbortController();
@@ -225,27 +226,24 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
         output: text.trim() || 'BIRD 2.x Socket: (No output returned for command)',
         durationMs,
       };
+    } else {
+      const text = await res.text().catch(() => '');
+      fetchError = `探针返回错误 (HTTP ${res.status}): ${text.trim() || res.statusText}`;
     }
-  } catch {
-    // bird-lgproxy is unreachable or offline -> Fallback to realistic DN42 Dev Simulation
+  } catch (err) {
+    fetchError = `无法连接到探针 (${proxyUrl})：${err.message || '连接超时或被拒绝'}`;
   }
 
-  // 🟣 Realistic Fallback Dev Simulator
-  const mockOutput = generateMockBirdResponse({
-    nodeId: cleanNode,
-    commandType,
-    target: cleanTarget,
-    command: birdCommand,
-  });
-
+  // 严格实测模式：明确返回不可用状态与错误详情
   return {
-    success: true,
+    success: false,
     isLive: false,
-    isMock: true,
+    isMock: false,
     nodeId: cleanNode,
     command: birdCommand,
-    output: mockOutput,
-    durationMs: Date.now() - startTime + Math.floor(Math.random() * 25 + 15),
+    output: `❌ 节点探针离线或不可达 [${cleanNode.toUpperCase()}]\n${fetchError}\n\n💡 提示：该节点 (${cleanNode}) 尚未部署 bird-lgproxy 探针，或防火墙未放行端口。`,
+    durationMs: Date.now() - startTime,
+    error: fetchError,
   };
 }
 

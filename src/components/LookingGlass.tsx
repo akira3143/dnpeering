@@ -96,14 +96,14 @@ export const LookingGlass: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        showToast(data.error || '诊断请求执行失败', 'error');
-        setHistoryResults({
+        showToast(data.error || '该节点未响应或离线', 'error');
+        setHistoryResults(data.output ? data : {
           success: false,
           isLive: false,
           nodeId: node,
           command: `${type} ${target}`,
           output: `❌ 诊断服务异常：${data.error || '无法连接到探测节点'}`,
-          durationMs: 0,
+          durationMs: data.durationMs || 0,
         });
       } else {
         setHistoryResults(data);
@@ -470,8 +470,9 @@ export const LookingGlass: React.FC = () => {
                       <span>LIVE SOCKET</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-950/80 border border-purple-500/40 text-purple-300 font-mono text-[10px]">
-                      <span>DEV SIMULATION</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-950/80 border border-rose-500/40 text-rose-300 font-mono text-[10px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                      <span>NODE OFFLINE</span>
                     </span>
                   )}
 
