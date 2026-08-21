@@ -23,7 +23,19 @@ NC='\033[0m'
 
 BIRD_LG_VER="v1.3.4"
 DEFAULT_PORT=5000
-DEFAULT_SOCKET="/var/run/bird/bird.ctl"
+
+# 自动探测 BIRD 控制 Socket 路径
+if [ -S "/run/bird/bird.ctl" ]; then
+  DEFAULT_SOCKET="/run/bird/bird.ctl"
+elif [ -S "/var/run/bird/bird.ctl" ]; then
+  DEFAULT_SOCKET="/var/run/bird/bird.ctl"
+elif [ -S "/run/bird.ctl" ]; then
+  DEFAULT_SOCKET="/run/bird.ctl"
+elif [ -S "/var/run/bird.ctl" ]; then
+  DEFAULT_SOCKET="/var/run/bird.ctl"
+else
+  DEFAULT_SOCKET="/run/bird/bird.ctl"
+fi
 
 echo -e "${CYAN}${BOLD}"
 echo "  ╔═════════════════════════════════════════════════════════════════════╗"
@@ -37,6 +49,25 @@ if [ "$(id -u)" -ne 0 ]; then
   echo -e "${RED}❌ 错误：请使用 root 用户或 sudo 执行此脚本。${NC}"
   exit 1
 fi
+
+# 辅助函数：即使在 curl | bash 管道模式下也能正确读取用户终端键盘输入
+prompt_user() {
+  local prompt_text="$1"
+  local var_name="$2"
+  local default_value="${3:-}"
+
+  if [ -c /dev/tty ]; then
+    read -rp "$prompt_text" "$var_name" </dev/tty || true
+  else
+    read -rp "$prompt_text" "$var_name" || true
+  fi
+
+  local val
+  eval "val=\$$var_name"
+  if [ -z "$val" ] && [ -n "$default_value" ]; then
+    eval "$var_name=\"$default_value\""
+  fi
+}
 
 # 2. 解析命令行参数
 LISTEN_IP="127.0.0.1"
@@ -61,7 +92,7 @@ while [[ $# -gt 0 ]]; do
       INTERACTIVE=false
       shift 2
       ;;
-    -s|--socket)
+    -s|--socket|--bird)
       BIRD_SOCKET="$2"
       INTERACTIVE=false
       shift 2
@@ -81,7 +112,7 @@ while [[ $# -gt 0 ]]; do
       echo "选项:"
       echo "  -l, --listen <IP:PORT>     设置监听地址 (默认: 127.0.0.1:5000)"
       echo "  -t, --token <STRING>       设置 API 认证 Token (可选)"
-      echo "  -s, --socket <PATH>        设置 BIRD 控制 Socket 路径 (默认: /var/run/bird/bird.ctl)"
+      echo "  -s, --bird <PATH>          设置 BIRD 控制 Socket 路径 (默认: ${DEFAULT_SOCKET})"
       echo "  -c, --core-url <URL>       设置主站 Core Portal 网址 (用于端口自动上报)"
       echo "  -n, --node-id <NODE_ID>    设置当前节点的唯一代号 (如 us01, de02)"
       exit 0
@@ -103,8 +134,9 @@ if [ "$INTERACTIVE" = true ]; then
   echo "   [1] 本地模式 (127.0.0.1:5000) - 适用与 Portal 部署在同台 VPS (如 JP-7 主机)"
   echo "   [2] 内网/全网模式 (0.0.0.0:5000) - 适用远端 PoP 节点 (如 US-01, DE-02)"
   echo "   [3] 自定义 IP 与端口"
-  read -rp "请选择 [默认 1]: " MODE_CHOICE
-  MODE_CHOICE="${MODE_CHOICE:-1}"
+  
+  MODE_CHOICE=""
+  prompt_user "请选择 [默认 1]: " MODE_CHOICE "1"
 
   case "$MODE_CHOICE" in
     2)
@@ -112,9 +144,11 @@ if [ "$INTERACTIVE" = true ]; then
       LISTEN_PORT=5000
       ;;
     3)
-      read -rp "请输入监听 IP [127.0.0.1]: " CUSTOM_IP
+      CUSTOM_IP=""
+      CUSTOM_PORT=""
+      prompt_user "请输入监听 IP [127.0.0.1]: " CUSTOM_IP "127.0.0.1"
       LISTEN_IP="${CUSTOM_IP:-127.0.0.1}"
-      read -rp "请输入监听端口 [5000]: " CUSTOM_PORT
+      prompt_user "请输入监听端口 [5000]: " CUSTOM_PORT "5000"
       LISTEN_PORT="${CUSTOM_PORT:-5000}"
       ;;
     *)
@@ -125,16 +159,20 @@ if [ "$INTERACTIVE" = true ]; then
 
   echo ""
   echo -e "${BOLD}2. 设置安全通信 Token (防扫描 / 远端鉴权):${NC}"
-  read -rp "请输入通信 Token (直接回车表示不使用 Token): " INPUT_TOKEN
+  INPUT_TOKEN=""
+  prompt_user "请输入通信 Token (直接回车表示不使用 Token): " INPUT_TOKEN ""
   PROXY_TOKEN="${INPUT_TOKEN:-}"
 
   echo ""
   echo -e "${BOLD}3. 自动向主站同步本节点已占用端口 (推荐远端 PoP 开启):${NC}"
-  read -rp "是否配置自动上报端口到 Core 主站? (y/N): " SYNC_CHOICE
+  SYNC_CHOICE=""
+  prompt_user "是否配置自动上报端口到 Core 主站? (y/N): " SYNC_CHOICE "N"
   if [[ "$SYNC_CHOICE" =~ ^[Yy]$ ]]; then
-    read -rp "请输入主站地址 (如 https://dn42.yourdomain.com): " INPUT_CORE_URL
+    INPUT_CORE_URL=""
+    INPUT_NODE_ID=""
+    prompt_user "请输入主站地址 (如 https://dn42.yourdomain.com): " INPUT_CORE_URL ""
     CORE_URL="${INPUT_CORE_URL%/}"
-    read -rp "请输入本节点的 ID 代号 (与 portal.config.yaml 保持一致，如 us01): " INPUT_NODE_ID
+    prompt_user "请输入本节点的 ID 代号 (与 portal.config.yaml 保持一致，如 us01): " INPUT_NODE_ID ""
     NODE_ID="${INPUT_NODE_ID:-}"
   fi
 
@@ -144,9 +182,9 @@ fi
 # 4. 依赖项检查
 echo -e "${CYAN}🔍 检查系统基础依赖 (curl, tar, iproute2)...${NC}"
 if command -v apt-get &>/dev/null; then
-  apt-get update -qq && apt-get install -y -qq curl tar iproute2 wireguard-tools jq >/dev/null 2>&1 || true
+  apt-get update -qq && apt-get install -y -qq curl tar iproute2 wireguard-tools >/dev/null 2>&1 || true
 elif command -v apk &>/dev/null; then
-  apk add --no-cache curl tar iproute2 wireguard-tools jq >/dev/null 2>&1 || true
+  apk add --no-cache curl tar iproute2 wireguard-tools >/dev/null 2>&1 || true
 fi
 
 # 5. 架构检测 (x86_64 / arm64)
@@ -177,11 +215,12 @@ chmod +x /usr/local/bin/bird-lgproxy
 echo -e "${GREEN}✅ 二进制文件安装成功: /usr/local/bin/bird-lgproxy${NC}"
 
 # 7. 生成 systemd 服务文件 (bird-lgproxy)
+# 修正参数：bird-lgproxy 使用 --listen 和 --bird 参数
 SERVICE_FILE="/etc/systemd/system/bird-lgproxy.service"
-EXEC_CMD="/usr/local/bin/bird-lgproxy -listen ${LISTEN_IP}:${LISTEN_PORT} -birdsocket ${BIRD_SOCKET}"
+EXEC_CMD="/usr/local/bin/bird-lgproxy --listen ${LISTEN_IP}:${LISTEN_PORT} --bird ${BIRD_SOCKET}"
 
 if [ -n "$PROXY_TOKEN" ]; then
-  EXEC_CMD="${EXEC_CMD} -token ${PROXY_TOKEN}"
+  EXEC_CMD="${EXEC_CMD} --token ${PROXY_TOKEN}"
 fi
 
 cat <<EOF > "$SERVICE_FILE"
