@@ -57,6 +57,29 @@ case "$1" in
     ${EDITOR:-nano} "${PORTAL_DIR}/.env"
     ;;
 
+  scan|scan-ports)
+    echo -e "${CYAN}🔍 正在深度扫描本机已有的 WireGuard 隧道与监听端口...${NC}"
+    echo ""
+    echo -e "  ${YELLOW}--- 1. Linux 内核实时 WireGuard 网卡监听端口 (wg show) ---${NC}"
+    if command -v wg >/dev/null 2>&1; then
+      wg show all listen-port 2>/dev/null || echo "  (暂无活跃 wg 接口或需 root 权限)"
+    else
+      echo "  (未安装 wg 命令)"
+    fi
+    echo ""
+    echo -e "  ${YELLOW}--- 2. /etc/wireguard/*.conf 配置文件中声明的 ListenPort ---${NC}"
+    if [ -d "/etc/wireguard" ]; then
+      grep -rnE "^ListenPort\s*=" /etc/wireguard/ 2>/dev/null || echo "  (未在 /etc/wireguard/ 发现 ListenPort 声明)"
+    else
+      echo "  (/etc/wireguard 目录不存在)"
+    fi
+    echo ""
+    echo -e "  ${YELLOW}--- 3. 正在监听的 UDP 端口 (10000-65535) ---${NC}"
+    ss -ulnp 2>/dev/null | grep -E ":[1-6][0-9]{4}" || netstat -ulnp 2>/dev/null | grep -E ":[1-6][0-9]{4}" || echo "  (无相关 UDP 监听)"
+    echo ""
+    echo -e "${GREEN}✓ 提示: 后端已实装系统级端口自动融合引擎，以上所有端口均已被系统自动识别并纳入防冲突名单！${NC}"
+    ;;
+
   uninstall|rm)
     if [ -f "${PORTAL_DIR}/scripts/uninstall.sh" ]; then
       bash "${PORTAL_DIR}/scripts/uninstall.sh"
@@ -83,13 +106,14 @@ case "$1" in
     echo -e "${CYAN}==================================================================${NC}"
     echo -e "极简用法: ${GREEN}dnp <单字母或指令>${NC}"
     echo ""
-    echo -e "  ${YELLOW}dnp c${NC}  (config)    - 快速编辑节点与 ASN 统一配置 (保存即生效)"
-    echo -e "  ${YELLOW}dnp l${NC}  (logs)      - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
-    echo -e "  ${YELLOW}dnp s${NC}  (status)    - 查看服务运行状态与内存开销"
-    echo -e "  ${YELLOW}dnp r${NC}  (restart)   - 重启门户服务"
-    echo -e "  ${YELLOW}dnp u${NC}  (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
-    echo -e "  ${YELLOW}dnp e${NC}  (env)       - 编辑 .env 私密密钥与 Telegram Token"
-    echo -e "  ${YELLOW}dnp rm${NC} (uninstall) - 干净卸载与清理"
+    echo -e "  ${YELLOW}dnp c${NC}    (config)    - 快速编辑节点与 ASN 统一配置 (保存即生效)"
+    echo -e "  ${YELLOW}dnp l${NC}    (logs)      - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
+    echo -e "  ${YELLOW}dnp s${NC}    (status)    - 查看服务运行状态与内存开销"
+    echo -e "  ${YELLOW}dnp r${NC}    (restart)   - 重启门户服务"
+    echo -e "  ${YELLOW}dnp u${NC}    (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
+    echo -e "  ${YELLOW}dnp scan${NC} (ports)     - 扫描检测本机所有已存 WireGuard 隧道与监听端口"
+    echo -e "  ${YELLOW}dnp e${NC}    (env)       - 编辑 .env 私密密钥与 Telegram Token"
+    echo -e "  ${YELLOW}dnp rm${NC}   (uninstall) - 干净卸载与清理"
     echo ""
     ;;
 esac

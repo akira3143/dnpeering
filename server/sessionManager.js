@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getUnifiedOccupiedPorts } from './portScanner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,14 +85,15 @@ function computeDiff(oldData, newData) {
 }
 
 /**
- * Retrieves all occupied ports for a specific node
+ * Retrieves all occupied ports for a specific node (merging ledger, config, and live kernel WireGuard ports)
  * @param {string} nodeId 
  * @returns {number[]}
  */
 export function getOccupiedPortsForNode(nodeId) {
   const portLedger = loadJson(PORT_LEDGER_FILE, {});
   const nodePorts = portLedger[nodeId] || {};
-  return Object.keys(nodePorts).map(p => parseInt(p, 10)).filter(p => !isNaN(p));
+  const ledgerPorts = Object.keys(nodePorts).map(p => parseInt(p, 10)).filter(p => !isNaN(p));
+  return getUnifiedOccupiedPorts(nodeId, ledgerPorts);
 }
 
 /**
