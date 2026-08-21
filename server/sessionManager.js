@@ -19,11 +19,13 @@ if (!fs.existsSync(DATA_DIR)) {
  * Baseline scan executed ONCE on server startup
  * Silently imports pre-existing WireGuard ports into port_ledger.json without overwriting
  */
-export function initPortLedgerWithBaselineScan(defaultNodeId = 'jp07') {
+export function initPortLedgerWithBaselineScan(defaultNodeId) {
   try {
+    const activeCfg = getActiveConfig();
+    const primaryNodeId = defaultNodeId || activeCfg?.nodes?.[0]?.id || 'jp07';
     const portLedger = loadJson(PORT_LEDGER_FILE, {});
-    if (!portLedger[defaultNodeId]) {
-      portLedger[defaultNodeId] = {};
+    if (!portLedger[primaryNodeId]) {
+      portLedger[primaryNodeId] = {};
     }
 
     const baselinePorts = scanBaselineExistingPorts();
@@ -31,8 +33,8 @@ export function initPortLedgerWithBaselineScan(defaultNodeId = 'jp07') {
 
     for (const item of baselinePorts) {
       const portKey = String(item.port);
-      if (!portLedger[defaultNodeId][portKey]) {
-        portLedger[defaultNodeId][portKey] = {
+      if (!portLedger[primaryNodeId][portKey]) {
+        portLedger[primaryNodeId][portKey] = {
           label: item.label,
           port: item.port,
           type: 'in_use',
@@ -54,7 +56,7 @@ export function initPortLedgerWithBaselineScan(defaultNodeId = 'jp07') {
 }
 
 // Silently perform baseline scan on initial server startup
-initPortLedgerWithBaselineScan('jp07');
+initPortLedgerWithBaselineScan();
 
 // Helper to safely load JSON
 function loadJson(filePath, defaultValue = {}) {
@@ -237,10 +239,32 @@ export function savePeeringSession(payload, clientIp) {
     existingSession = findSessionByAsnAndNode(cleanAsn, nodeId);
   }
 
+  const portLedger = loadJson(PORT_LEDGER_FILE, {});
+  const nodePorts = portLedger[nodeId] || {};
+
   const asnNum = parseInt(cleanAsn, 10);
   const safeAsn = isNaN(asnNum) || asnNum <= 0 ? 0 : asnNum;
-  const calculatedPort = 20000 + (safeAsn % 10000);
-  const newPort = (payload.hostPort && Number(payload.hostPort) >= 10000) ? Number(payload.hostPort) : calculatedPort;
+  let requestedPort = (payload.hostPort && Number(payload.hostPort) >= 10000 && Number(payload.hostPort) <= 65535)
+    ? Number(payload.hostPort)
+    : 20000 + (safeAsn % 10000);
+
+  // If the requested port is already occupied/locked by a DIFFERENT ASN/session, automatically step up to avoid conflict!
+  let allocatedPort = requestedPort;
+  let attempts = 0;
+  while (
+    nodePorts[allocatedPort] &&
+    nodePorts[allocatedPort].asn &&
+    nodePorts[allocatedPort].asn !== cleanAsn &&
+    (!existingSession || nodePorts[allocatedPort].sessionId !== existingSession.id) &&
+    attempts < 50
+  ) {
+    allocatedPort += 10000;
+    if (allocatedPort > 65535) {
+      allocatedPort = 20000 + ((allocatedPort + 1) % 10000);
+    }
+    attempts++;
+  }
+  const newPort = allocatedPort;
 
   const now = new Date().toISOString();
   let session;
@@ -492,11 +516,13 @@ export function mergeProbeReportedPorts(nodeId, reportedPorts = []) {
     portLedger[cleanId] = {};
   }
 
+  const reportedPortSet = new Set();
   let updatedCount = 0;
   for (const item of reportedPorts) {
     const portNum = parseInt(item.port, 10);
     if (isNaN(portNum) || portNum < 10000 || portNum > 65535) continue;
 
+    reportedPortSet.add(portNum);
     const portKey = String(portNum);
     const existing = portLedger[cleanId][portKey];
 
@@ -516,6 +542,14 @@ export function mergeProbeReportedPorts(nodeId, reportedPorts = []) {
       reportedAt: new Date().toISOString(),
     };
     updatedCount++;
+  }
+
+  // Prune any stale 'remote_probe' ports that are no longer reported by the probe
+  for (const [portKey, entry] of Object.entries(portLedger[cleanId])) {
+    const p = parseInt(portKey, 10);
+    if (entry.source === 'remote_probe' && !reportedPortSet.has(p)) {
+      delete portLedger[cleanId][portKey];
+    }
   }
 
   saveJson(PORT_LEDGER_FILE, portLedger);
