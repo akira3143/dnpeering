@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../router/Router';
 import { useNetwork } from '../context/NetworkContext';
-import { useToast } from './Toast';
 import { useAuth } from '../context/AuthContext';
 import { CURRENT_BRAND_LOGO } from '../utils/brandLogo';
 import {
@@ -9,7 +8,6 @@ import {
   X,
   Layers,
   Mail,
-  Copy,
   Terminal,
   Activity,
   ShieldCheck,
@@ -19,7 +17,6 @@ import {
 export const Navbar: React.FC = () => {
   const { path, navigate } = useRouter();
   const { networkMeta } = useNetwork();
-  const { copyToClipboard } = useToast();
   const {
     user,
     isAuthenticated,
@@ -46,7 +43,6 @@ export const Navbar: React.FC = () => {
   const homeNavLinks = [
     { label: '节点列表', href: '#nodes', icon: Layers },
     { label: 'Looking Glass', href: '#looking-glass', icon: Terminal },
-    { label: '互联策略', href: '#policy', icon: ShieldCheck },
     { label: '联络我们', href: '#contact', icon: Mail },
   ];
 
@@ -66,7 +62,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#070a11]/90 backdrop-blur-xl transition-all">
       <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
-        {/* Left: Brand & ASN Pill */}
+        {/* Left: Brand */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
@@ -87,17 +83,6 @@ export const Navbar: React.FC = () => {
                 DN42 Autonomous System
               </span>
             </div>
-          </button>
-
-          {/* ASN Copy Badge */}
-          <button
-            onClick={() => copyToClipboard(networkMeta.asn, 'ASN')}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-mono transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            title="点击复制 ASN"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
-            <span>{networkMeta.asn}</span>
-            <Copy className="w-3 h-3 text-cyan-400/70" />
           </button>
         </div>
 
