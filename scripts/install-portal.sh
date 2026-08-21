@@ -74,16 +74,10 @@ else
 fi
 echo -e "${GREEN}✓ 源码同步就绪${NC}"
 
-# 5. 安装 NPM 依赖并构建前端生产包
-echo -e "${CYAN}🔨 [4/7] 安装项目依赖并编译前端生产包...${NC}"
-npm install --loglevel=error
-npm run build
-echo -e "${GREEN}✓ 生产包编译成功 (dist/ 构建完毕)${NC}"
+# 5. 初始化配置文件与安全随机密钥
+echo -e "${CYAN}🔑 [4/7] 检查并初始化配置与环境安全密钥...${NC}"
 
-# 6. 初始化配置文件与安全随机密钥
-echo -e "${CYAN}🔑 [5/7] 检查并初始化配置与环境安全密钥...${NC}"
-
-# 6.1 检查 .env
+# 5.1 检查 .env
 if [ ! -f "$PORTAL_DIR/.env" ]; then
     echo -e "${YELLOW}⚙️ 生成新的 .env 文件并生成安全 64 字节 JWT Secret...${NC}"
     JWT_SECRET=$(openssl rand -hex 64)
@@ -95,7 +89,7 @@ else
     echo -e "${GREEN}✓ 已检测到现存 .env，保留原密钥${NC}"
 fi
 
-# 6.2 检查 portal.config.yaml
+# 5.2 检查 portal.config.yaml
 if [ ! -f "$PORTAL_DIR/portal.config.yaml" ]; then
     echo -e "${YELLOW}⚙️ 生成新的 portal.config.yaml 集中配置文件...${NC}"
     cp "$PORTAL_DIR/portal.config.example.yaml" "$PORTAL_DIR/portal.config.yaml"
@@ -110,6 +104,12 @@ mkdir -p "$PORTAL_DIR/server/data"
 id -u dnpeering &>/dev/null || useradd -r -s /bin/false -d "$PORTAL_DIR" dnpeering
 chown -R dnpeering:dnpeering "$PORTAL_DIR/server/data"
 chmod 700 "$PORTAL_DIR/server/data"
+
+# 6. 安装 NPM 依赖并构建前端生产包
+echo -e "${CYAN}🔨 [5/7] 安装项目依赖并编译前端生产包...${NC}"
+npm install --loglevel=error
+npm run build
+echo -e "${GREEN}✓ 生产包编译成功 (dist/ 构建完毕)${NC}"
 
 # 7. 配置 systemd 守护进程
 echo -e "${CYAN}🚀 [6/7] 配置 systemd 服务 (${SERVICE_NAME})...${NC}"
