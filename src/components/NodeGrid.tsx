@@ -72,39 +72,39 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
         {/* Table / List View */}
         <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
           <div className="overflow-x-auto">
-            <div className="min-w-[780px]">
+            <div className="min-w-[820px]">
               
               {/* Table Header */}
-              <div className="grid grid-cols-[minmax(240px,2.8fr)_100px_minmax(200px,2.2fr)_80px_120px] items-center px-5 py-3 bg-black/60 border-b border-white/10 text-slate-500 text-[11px] uppercase tracking-wider font-sans select-none font-medium">
-                <div className="pl-2">节点名称 / 代号</div>
+              <div className="grid grid-cols-[2.6fr_0.9fr_2.2fr_0.7fr_1fr] items-center px-6 py-3.5 bg-gradient-to-r from-white/[0.03] to-transparent border-b border-white/[0.08] text-slate-500 text-[11px] uppercase tracking-[0.08em] font-sans select-none">
+                <div className="pl-1">节点名称 / 代号</div>
                 <div className="text-center">状态</div>
-                <div className="text-center">Endpoint</div>
+                <div className="text-center">WireGuard Endpoint</div>
                 <div className="text-center">MTU</div>
                 <div className="text-center">操作</div>
               </div>
 
               {/* Table Body Rows */}
-              <div className="divide-y divide-white/[0.04] font-mono text-xs">
+              <div className="font-mono text-xs">
                 {filteredNodes.map((node, idx) => {
                   const userSession = activeSessions.find((s) => s.nodeId === node.id);
                   return (
                     <div
                       key={node.id}
-                      className={`grid grid-cols-[minmax(240px,2.8fr)_100px_minmax(200px,2.2fr)_80px_120px] items-center px-5 py-3.5 hover:bg-white/[0.03] transition-colors group ${idx % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                      className={`grid grid-cols-[2.6fr_0.9fr_2.2fr_0.7fr_1fr] items-center px-6 py-4 hover:bg-cyan-500/[0.04] transition-all duration-200 group border-b border-white/[0.04] ${idx % 2 === 0 ? 'bg-white/[0.01]' : ''}`}
                     >
                       {/* Column 1: Node Name & Code */}
-                      <div className="flex items-center gap-3 pl-2 min-w-0">
-                        <span className="text-lg shrink-0 select-none leading-none">{node.flag}</span>
+                      <div className="flex items-center gap-3.5 pl-1 min-w-0">
+                        <span className="text-xl shrink-0 select-none">{node.flag}</span>
                         <div className="min-w-0 flex-1">
-                          <div className="font-sans font-semibold text-[13px] text-white group-hover:text-cyan-300 transition-colors truncate leading-snug">
+                          <div className="font-sans font-semibold text-sm text-white/90 group-hover:text-cyan-300 transition-colors truncate">
                             {node.name}
                           </div>
                           <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-1.5 truncate">
-                            <span className="text-cyan-400/80 font-semibold">{node.code}</span>
-                            <span className="text-slate-600">·</span>
+                            <span className="text-cyan-400 font-bold">{node.code}</span>
+                            <span className="text-white/10">·</span>
                             <span>{node.city}</span>
-                            <span className="text-slate-600">·</span>
-                            <span className="text-slate-500/80">{node.isp}</span>
+                            <span className="text-white/10">·</span>
+                            <span className="text-slate-600">{node.isp}</span>
                           </div>
                         </div>
                       </div>
@@ -121,8 +121,8 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                             <span>已互联</span>
                           </button>
                         ) : (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                            node.status === 'active' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide ${
+                            node.status === 'active' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`}></span>
                             <span>{node.status === 'active' ? 'ACTIVE' : 'MAINT'}</span>
@@ -131,13 +131,13 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                       </div>
 
                       {/* Column 3: Endpoint */}
-                      <div className="flex items-center justify-center gap-1.5">
-                        <code className="truncate text-slate-300 group-hover:text-cyan-200 transition-colors text-[12px]" title={node.endpointDomain}>
+                      <div className="flex items-center justify-center gap-2">
+                        <code className="truncate text-slate-300 group-hover:text-cyan-200 transition-colors text-[12px] font-medium" title={node.endpointDomain}>
                           {node.endpointDomain}
                         </code>
                         <button
                           onClick={() => copyToClipboard(node.endpointDomain, 'Endpoint')}
-                          className="text-slate-600 hover:text-cyan-300 p-1 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
+                          className="text-slate-600 hover:text-cyan-300 p-1 rounded-md hover:bg-white/10 transition-all cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
                           title="复制 Endpoint"
                           aria-label="复制 Endpoint"
                         >
@@ -147,7 +147,7 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
 
                       {/* Column 4: MTU */}
                       <div className="text-center">
-                        <span className="font-mono text-slate-400 text-xs tabular-nums">
+                        <span className="font-mono text-slate-400 font-semibold text-[11px] bg-white/[0.04] px-2.5 py-1 rounded-md border border-white/[0.06] inline-block tabular-nums">
                           {node.mtu}
                         </span>
                       </div>
@@ -158,7 +158,7 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                           onClick={() => {
                             if (onSelectNode) onSelectNode(node.id);
                           }}
-                          className="btn-primary px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-950/40"
+                          className="btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-lg shadow-cyan-950/30 hover:shadow-cyan-500/20 transition-all"
                         >
                           <Terminal className="w-3.5 h-3.5" />
                           <span>发起 Peer</span>
