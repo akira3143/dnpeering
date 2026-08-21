@@ -286,8 +286,11 @@ rtt min/avg/max/mdev = ${r1}/${avg}/${r4}/0.142 ms`;
   }
 
   if (commandType === 'status') {
+    const config = getActiveConfig();
+    const targetNode = config.nodes.find(n => n.id.toLowerCase() === nodeId.toLowerCase());
+    const realIp = targetNode?.ipv4 || '172.20.188.7';
     return `BIRD 2.15.1 (AkiLab DN42 Core Node - ${nodeUpper})
-Router ID:       172.20.14.${nodeId === 'jp07' ? '1' : nodeId === 'us01' ? '2' : '3'}
+Router ID:       ${realIp}
 Current server time: ${timestamp}
 Last reconfigure:    ${timestamp} (Reconfigured by admin)
 Daemon is up and running.
