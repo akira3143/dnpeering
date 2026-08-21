@@ -3,6 +3,7 @@ import { useNetwork } from '../context/NetworkContext';
 import { useAuth } from '../context/AuthContext';
 import type { RegionType } from '../types/network';
 import { useToast } from './Toast';
+import { CountryFlag } from './CountryFlag';
 import { Layers, Copy, Terminal, Activity } from 'lucide-react';
 
 interface NodeGridProps {
@@ -94,8 +95,8 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                     >
                       {/* Column 1: Node Name & Code */}
                       <div className="flex items-center gap-4 pl-2 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 shadow-inner">
-                          <span className="text-sm select-none">{node.flag}</span>
+                        <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                          <CountryFlag flag={node.flag} code={node.code} country={node.country} className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-sans font-semibold text-sm text-slate-100 group-hover:text-cyan-300 transition-colors truncate">
