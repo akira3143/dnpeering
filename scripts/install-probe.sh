@@ -250,23 +250,20 @@ if [ -d "/etc/wireguard" ]; then
   done
 fi
 
-# 2. 构建 JSON Payload
-PORTS_JSON="[]"
+# 2. 构建 JSON Payload (原生 Bash 序列化，零第三方依赖)
+PORTS_JSON="["
+FIRST=1
 for port in "${!DETECTED_PORTS[@]}"; do
   iface="${DETECTED_PORTS[$port]}"
-  ITEM=$(cat <<JSON_ITEM
-{"port": $port, "name": "$iface", "label": "$iface : $port", "type": "in_use", "status": "existing", "source": "remote_probe"}
-JSON_ITEM
-)
-  if command -v jq >/dev/null 2>&1; then
-    PORTS_JSON=$(echo "$PORTS_JSON" | jq --argjson item "$ITEM" '. += [$item]')
+  if [ "$FIRST" -eq 0 ]; then
+    PORTS_JSON="${PORTS_JSON},"
   fi
+  PORTS_JSON="${PORTS_JSON}{\"port\":$port,\"name\":\"$iface\",\"label\":\"$iface : $port\",\"type\":\"in_use\",\"status\":\"existing\",\"source\":\"remote_probe\"}"
+  FIRST=0
 done
+PORTS_JSON="${PORTS_JSON}]"
 
-PAYLOAD=$(cat <<JSON_PAYLOAD
-{"nodeId": "$NODE_ID", "ports": $PORTS_JSON}
-JSON_PAYLOAD
-)
+PAYLOAD="{\"nodeId\":\"$NODE_ID\",\"ports\":$PORTS_JSON}"
 
 # 3. 发送上报请求
 curl -sSL -X POST "${CORE_URL}/api/probe/report-ports" \
