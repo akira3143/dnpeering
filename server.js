@@ -27,7 +27,7 @@ import { checkRateLimit, recordSubmission } from './server/rateLimiter.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DIST_DIR = path.join(__dirname, 'dist');
-const PORT = process.env.PORT || 3143;
+const PORT = process.env.PORT || 4242;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

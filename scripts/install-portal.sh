@@ -20,7 +20,7 @@ NC='\033[0m'
 PORTAL_DIR="/opt/dnpeering"
 REPO_URL="https://github.com/akira3143/dnpeering.git"
 SERVICE_NAME="dn42-portal"
-DEFAULT_PORT="3143"
+DEFAULT_PORT="4242"
 
 echo -e "${CYAN}"
 echo "=================================================================="

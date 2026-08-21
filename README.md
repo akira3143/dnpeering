@@ -81,7 +81,7 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/uni
 
 ```caddyfile
 dn42.yourdomain.com {
-    reverse_proxy 127.0.0.1:3143
+    reverse_proxy 127.0.0.1:4242
 }
 ```
 

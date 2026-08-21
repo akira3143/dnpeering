@@ -165,11 +165,11 @@ function telegramApiPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   server: {
-    port: 3143,
+    port: 4242,
     host: true,
   },
   preview: {
-    port: 3143,
+    port: 4242,
     host: true,
   },
   plugins: [

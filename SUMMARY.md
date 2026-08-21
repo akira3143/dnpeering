@@ -143,7 +143,7 @@
 
 ```caddyfile
 dn42.yourdomain.com {
-    reverse_proxy 127.0.0.1:3143
+    reverse_proxy 127.0.0.1:4242
 }
 ```
 * 执行 `sudo systemctl reload caddy` 即可全自动启用 Let's Encrypt HTTPS 证书！
