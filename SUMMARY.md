@@ -1,4 +1,4 @@
-# 📋 dnpeering 项目全量更新与修复审查总结报告
+# 📋 dnpeering 项目全量更新、Looking Glass 集成细节与审查总结报告
 
 > **项目主页**: [https://github.com/akira3143/dnpeering](https://github.com/akira3143/dnpeering)  
 > **生成时间**: 2026-08-21  
@@ -15,7 +15,54 @@
 
 ---
 
-## 🔌 二、多节点分布式端口生命周期与自动发现引擎
+## 🦅 二、Looking Glass 深度集成与 BIRD 2 协议栈开发细节
+
+### 1. 协议集成架构与通信链路
+我们摈弃了传统 Looking Glass 割裂的外部 iframe 或独立二级域名方案，实现了**原生全栈 Cyberpunk 终端一体化集成**：
+
+```
+[前端 React 终端控制台]
+       │ (REST / JSON 协议交互: POST /api/looking-glass/query)
+       ▼
+[主站 Node.js 后端网关 (server/lookingGlassService.js)]
+       │
+       ├── 本地节点 (JP07): 直接通信 /var/run/bird/bird.ctl (Unix Domain Socket)
+       │
+       └── 远端 PoP 节点 (US01, DE02): HTTP REST 通信 bird-lgproxy 探针 (端口 5000)
+              │
+              ▼
+       [BIRD 2 路由守护进程 / Linux 内核协议栈]
+```
+
+### 2. 支持的 7 大核心诊断命令与输出解析
+* **`route` (BGP 路由透视)**：执行 `show route for <target> all`，实时解析 AS-Path、Local Preference、BGP Communities（如标准 DN42 延迟/地域属性）、NextHop 及多路径选路结果；
+* **`protocols` (BGP 会话状态机)**：执行 `show protocols all <peer>`，实时提取会话状态（`Established` / `Connect` / `Active` / `Idle`）、收发路由计数器（Imported / Exported）、会话持续运行时间（Uptime）；
+* **`ping` (ICMP 连通性测试)**：执行底层多包探测，统计最小/平均/最大往返延迟（RTT min/avg/max/mdev）与丢包率；
+* **`traceroute` (多跳路径探测)**：跟踪跨自治系统（AS）的数据包逐跳转发路径；
+* **`status` (BIRD 引擎状态)**：显示 BIRD 守护进程版本、Router ID、系统内存分配与各路由表汇总；
+* **`memory`**：展示 BIRD 内部内存池（Memory Pools）占用；
+* **`symbols`**：提取 BIRD 内部协议符号与过滤器列表。
+
+### 3. 5 阶段智能会话健康诊断引擎 (5-Stage Smart Diagnosis)
+在用户互联管理面板中，系统自动将底层 BGP 状态机翻译为直观的 **5 阶段诊断指示灯与排错指引**：
+1. **Stage 1 (WireGuard 链路握手)**：判断底层 UDP 隧道是否成功握手；
+2. **Stage 2 (BGP Connect / Active)**：判断 TCP 179 端口握手与 BGP 对等状态；
+3. **Stage 3 (OpenConfirm / Established)**：判断 BGP 能力协商（Capability Negotiation）与 ASN 认证是否成功；
+4. **Stage 4 (Route Exchange 路由交换)**：判断双方是否已开始正常交换路由（Imported / Exported Routes > 0）；
+5. **Stage 5 (ROA & Policy Validation)**：结合 DN42 Registry 校验路由广播前缀的 ROA 签名有效性。
+
+### 4. 严苛的安全防注入防护 (Security & Anti-Injection)
+* **命令白名单机制**：输入严格限制在合法命令字典内；
+* **正则级参数洗练器**：对用户输入的 IP、IPv6、CIDR 前缀、ASN 编号和协议名实施严格的字符白名单过滤；
+* **命令分隔符强拦截**：全面剥离并拒绝包含 `;`, `|`, `&`, `` ` ``, `$()`, `\n` 等可能导致 Shell 逃逸与 RCE 注入的危险字符。
+
+### 5. 优雅降级与开发仿真引擎 (Dev Simulation & Fallback)
+* 当处于本地开发环境（无 BIRD 守护进程）或远端探针发生网络离线时，系统会自动平滑降级为内置的**高保真 BIRD 仿真引擎**；
+* 仿真引擎能够输出标准真实的 BIRD 路由格式、AS-Path 与 Ping 统计，保证前后端联调与单元测试 100% 可用。
+
+---
+
+## 🔌 三、多节点分布式端口生命周期与自动发现引擎
 
 ### 1. 状态流转机制
 | 端口状态 | 标识类型 (`type`) | 触发时机 | 业务影响 |
@@ -36,7 +83,7 @@
 
 ---
 
-## ⏳ 三、7 天未连通僵尸会话自动回收机制
+## ⏳ 四、7 天未连通僵尸会话自动回收机制
 
 * **超时自动清理引擎**：[`server/sessionManager.js`](server/sessionManager.js) 内置 `cleanupExpiredUnconnectedSessions` 算法；
 * **判定标准**：任何提交后超过 7 天未建立 BGP 连接（仍为 `pending_review` 或未连通）的会话，判定为弃坑/僵尸申请；
@@ -45,7 +92,7 @@
 
 ---
 
-## 🚀 四、一键部署、升级与干净卸载运维套件
+## 🚀 五、一键部署、升级与干净卸载运维套件
 
 ### 1. 远程极速安装命令
 * **主站门户一键部署 (Portal Hub)**：
@@ -73,7 +120,7 @@
 
 ---
 
-## ⚡ 五、极速全局 CLI 指令手册 (`dnp`)
+## ⚡ 六、极速全局 CLI 指令手册 (`dnp`)
 
 部署完成后，可在服务器任何路径下使用 `dnp` 指令进行极速运维：
 
@@ -92,7 +139,7 @@
 
 ---
 
-## 🌐 六、Caddy 极简反代示例 (`/etc/caddy/Caddyfile`)
+## 🌐 七、Caddy 极简反代示例 (`/etc/caddy/Caddyfile`)
 
 ```caddyfile
 dn42.yourdomain.com {
