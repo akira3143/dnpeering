@@ -23,6 +23,11 @@ const rateLimitTimer = setInterval(() => {
     if (valid.length === 0) asnRequests.delete(key);
     else asnRequests.set(key, valid);
   }
+  for (const [key, timestamps] of lgIpRequests.entries()) {
+    const valid = timestamps.filter(t => now - t < LG_WINDOW_MS);
+    if (valid.length === 0) lgIpRequests.delete(key);
+    else lgIpRequests.set(key, valid);
+  }
 }, 10 * 60 * 1000);
 if (typeof rateLimitTimer?.unref === 'function') {
   rateLimitTimer.unref();

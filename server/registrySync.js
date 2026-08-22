@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { exec } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +24,7 @@ console.log(`⏱️ [DN42 Registry] Periodic sync scheduled every ${SYNC_INTERVA
 export function triggerBackgroundSync() {
   const syncScript = path.join(ROOT_DIR, 'scripts', 'sync_registry.py');
   const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-  exec(`${pythonCmd} "${syncScript}"`, (err, stdout, stderr) => {
+  execFile(pythonCmd, [syncScript], (err, stdout, stderr) => {
     if (err) {
       console.warn(`[DN42 Registry] Background sync warning:`, stderr || err.message);
     } else {

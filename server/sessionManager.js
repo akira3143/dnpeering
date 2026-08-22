@@ -742,9 +742,12 @@ export function cleanupExpiredUnconnectedSessions(expirationMs = UNCONNECTED_EXP
 // Perform automated session expiry cleanup on startup and schedule periodic check every 6 hours
 try {
   cleanupExpiredUnconnectedSessions();
-  setInterval(() => {
+  const sessionCleanupTimer = setInterval(() => {
     cleanupExpiredUnconnectedSessions();
   }, 6 * 60 * 60 * 1000);
+  if (typeof sessionCleanupTimer?.unref === 'function') {
+    sessionCleanupTimer.unref();
+  }
 } catch (err) {
   console.error('Error scheduling session cleanup:', err);
 }
