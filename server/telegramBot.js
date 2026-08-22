@@ -5,12 +5,17 @@
  */
 
 import './env.js';
+import { getActiveConfig } from './configLoader.js';
 
-const DEFAULT_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-if (!DEFAULT_BOT_TOKEN || !DEFAULT_CHAT_ID) {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set. Telegram notifications will be disabled.');
+/**
+ * Dynamically resolves Telegram bot token and chat ID
+ * Supports both .env and portal.config.yaml
+ */
+function getTelegramConfig() {
+  const config = getActiveConfig() || {};
+  const botToken = config?.telegram?.bot_token || config?.telegram?.botToken || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = config?.telegram?.chat_id || config?.telegram?.chatId || process.env.TELEGRAM_CHAT_ID;
+  return { botToken, chatId };
 }
 
 /**
@@ -49,8 +54,10 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
 
   const cleanAsn = String(peerAsn || '').replace(/^AS/i, '').trim();
 
+  const { botToken, chatId } = getTelegramConfig();
+
   // Skip if Telegram is not configured
-  if (!DEFAULT_BOT_TOKEN || !DEFAULT_CHAT_ID) {
+  if (!botToken || !chatId) {
     console.log('[Telegram] Skipping notification (bot not configured)');
     return { success: true, messageId: null };
   }
@@ -98,58 +105,59 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
     headerLines.push(`💬 <b>留言:</b> <i>${escapeHtml(userNote)}</i>`);
   }
 
-  // If this is an update and has field diffs, highlight them!
-  if (!isNew && diffs && diffs.length > 0) {
+  headerLines.push(`🕒 <b>时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })} (UTC+8)`);
+
+  // 2. Clear Diff Section (if updating an existing session)
+  if (!isNew && diffs.length > 0) {
     headerLines.push(``);
-    headerLines.push(`📝 <b>变更明细:</b>`);
+    headerLines.push(`📝 <b>【变更字段明细 (Diff)】:</b>`);
     for (const diff of diffs) {
-      headerLines.push(`  ${diff}`);
+      headerLines.push(`  • <b>${escapeHtml(diff.label)}:</b> <s>${escapeHtml(diff.oldValue)}</s> ➔ <code>${escapeHtml(diff.newValue)}</code>`);
     }
   }
 
-  // 2. Pre-formatted Server-Side WireGuard Configuration (Generic [Interface] + [Peer])
-  const wgEndpointLine = peerEndpoint ? `Endpoint = ${escapeHtml(peerEndpoint)}\n` : '';
-  const asnNum = parseInt(cleanAsn, 10);
-  const safeAsn = isNaN(asnNum) || asnNum <= 0 ? 0 : asnNum;
-  const calculatedHostPort = 20000 + (safeAsn % 10000);
-  const serverListenPort = (hostPort && Number(hostPort) >= 10000 && Number(hostPort) <= 65535) ? Number(hostPort) : calculatedHostPort;
-  const serverLLA = node?.tunnelIpv6LLA || 'fe80::3143';
+  // 3. Complete Ready-to-Apply Server Configurations
+  const serverWgConfig = [
+    `[Interface]`,
+    `PrivateKey = <YOUR_SERVER_PRIVATE_KEY>`,
+    `ListenPort = ${hostPort}`,
+    `PostUp = ip addr add ${node?.tunnelIpv6LLA || 'fe80::...'} dev %i`,
+    node?.tunnelIpv6ULA ? `PostUp = ip addr add ${node.tunnelIpv6ULA}/128 dev %i` : null,
+    node?.tunnelIpv4 ? `PostUp = ip addr add ${node.tunnelIpv4}/32 peer ${peerIpv4 || '172.20.x.x'} dev %i` : null,
+    ``,
+    `[Peer]`,
+    `PublicKey = ${peerWgPubKey}`,
+    peerEndpoint ? `Endpoint = ${peerEndpoint}` : `# Endpoint = <Dynamic>`,
+    `AllowedIPs = 10.0.0.0/8, 172.20.0.0/14, 172.31.0.0/16, fd00::/8, fe80::/64`,
+  ].filter(Boolean).join('\n');
 
-  const serverWgConfig = `[Interface]
-PrivateKey = &lt;YOUR_SERVER_PRIVATE_KEY&gt;
-ListenPort = ${serverListenPort}
-Address = ${serverLLA}/64
-Table = off
-
-[Peer]
-PublicKey = ${escapeHtml(peerWgPubKey)}
-${wgEndpointLine}AllowedIPs = 10.0.0.0/8, 172.20.0.0/14, 172.31.0.0/16, fd00::/8, fe80::/64
-PersistentKeepalive = 25`;
-
-  // 3. Pre-formatted Bird2 BGP Neighbor Configuration Block
-  const birdConfig = `#DN42_${escapeHtml(cleanAsn)} ${escapeHtml(cleanTunnelName)} ${escapeHtml(nodeCleanCode)}
-protocol bgp ${escapeHtml(ifaceName)} from dn42_peers {
-    neighbor ${escapeHtml(peerIpv6LLA)}%${escapeHtml(ifaceName)} as ${escapeHtml(cleanAsn)};
-}`;
+  const birdConfig = [
+    `protocol bgp ${cleanTunnelName}_${nodeCleanCode} from dnpeers {`,
+    `    neighbor ${peerIpv6LLA} % '${ifaceName}' as ${cleanAsn};`,
+    `    direct;`,
+    `}`,
+  ].join('\n');
 
   // Assemble Complete Telegram Message
   const messageText = [
     headerLines.join('\n'),
+    ``,
     `━━━━━━━━━━━━━━━━━━━━`,
-    `🛠️ <b>WireGuard 服务端配置 (${escapeHtml(ifaceName)}.conf):</b>`,
+    `🚀 <b>【服务端一键部署配置】</b>`,
+    `⚙️ <b>WireGuard (/etc/wireguard/${ifaceName}.conf):</b>`,
     `<pre><code>${serverWgConfig}</code></pre>`,
     `🦅 <b>Bird2 BGP Neighbor 配置:</b>`,
     `<pre><code>${birdConfig}</code></pre>`,
   ].join('\n');
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${DEFAULT_BOT_TOKEN}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: DEFAULT_CHAT_ID,
+        chat_id: chatId,
         text: messageText,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
@@ -183,7 +191,8 @@ protocol bgp ${escapeHtml(ifaceName)} from dn42_peers {
  * Sends a notification when a peering session is deleted/cancelled by user
  */
 export async function sendDeleteNotification(session) {
-  if (!DEFAULT_BOT_TOKEN || !DEFAULT_CHAT_ID) {
+  const { botToken, chatId } = getTelegramConfig();
+  if (!botToken || !chatId) {
     return { success: true };
   }
 
@@ -200,11 +209,11 @@ export async function sendDeleteNotification(session) {
   ].join('\n');
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${DEFAULT_BOT_TOKEN}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: DEFAULT_CHAT_ID,
+        chat_id: chatId,
         text: messageText,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
