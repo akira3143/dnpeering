@@ -20,15 +20,20 @@ export const CountryFlag: React.FC<CountryFlagProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  // 1. 尝试从 Emoji 码点提取 2 位 ISO 国际国家代码
+  // 1. 尝试从 2 位国家缩写 (例如 "JP", "SG", "US", "DE") 或 Emoji 码点提取
   let isoCode: string | null = null;
   if (flag) {
-    const chars = [...flag];
-    if (chars.length === 2) {
-      const c1 = chars[0].codePointAt(0);
-      const c2 = chars[1].codePointAt(0);
-      if (c1 && c2 && c1 >= 0x1F1E6 && c1 <= 0x1F1FF && c2 >= 0x1F1E6 && c2 <= 0x1F1FF) {
-        isoCode = (String.fromCharCode(c1 - 0x1F1E6 + 65) + String.fromCharCode(c2 - 0x1F1E6 + 65)).toLowerCase();
+    const trimmed = flag.trim();
+    if (/^[A-Za-z]{2}$/.test(trimmed)) {
+      isoCode = trimmed.toLowerCase();
+    } else {
+      const chars = [...trimmed];
+      if (chars.length === 2) {
+        const c1 = chars[0].codePointAt(0);
+        const c2 = chars[1].codePointAt(0);
+        if (c1 && c2 && c1 >= 0x1F1E6 && c1 <= 0x1F1FF && c2 >= 0x1F1E6 && c2 <= 0x1F1FF) {
+          isoCode = (String.fromCharCode(c1 - 0x1F1E6 + 65) + String.fromCharCode(c2 - 0x1F1E6 + 65)).toLowerCase();
+        }
       }
     }
   }
