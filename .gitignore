@@ -25,6 +25,7 @@ dist-ssr
 
 # Sensitive server data
 server/data/*.json
+!server/data/port_ledger.example.json
 server/data/registry/
 
 # Environment secrets & unified config
