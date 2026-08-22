@@ -359,7 +359,7 @@ NODE_ID="${NODE_ID}"
 PROXY_TOKEN="${PROXY_TOKEN}"
 EOF
 
-  # 注册 systemd 报送服务与定时器
+  # 注册 systemd 报送服务与定时器 (统一为 1 小时自动上报)
   cat <<EOF > /etc/systemd/system/dn42-probe-sync.service
 [Unit]
 Description=AkiLab DN42 Probe Port Sync Reporter
@@ -367,6 +367,7 @@ After=network.target
 
 [Service]
 Type=oneshot
+EnvironmentFile=/etc/bird-lgproxy.env
 ExecStart=/usr/local/bin/dnp-probe-report
 EOF
 
@@ -377,19 +378,80 @@ After=network.target
 
 [Timer]
 OnBootSec=15sec
-OnUnitActiveSec=10min
+OnUnitActiveSec=1h
 Persistent=true
 
 [Install]
 WantedBy=timers.target
 EOF
 
+  # 注册中枢指令即时触发守护进程 (dn42-probe-agent)
+  cat <<'EOF' > /usr/local/bin/dnp-probe-agent
+#!/usr/bin/env python3
+import http.server
+import json
+import os
+import subprocess
+
+PORT = int(os.environ.get("AGENT_PORT", 5001))
+TOKEN = os.environ.get("PROXY_TOKEN", "")
+
+class ProbeHandler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        return  # Silent
+
+    def do_POST(self):
+        if self.path in ("/scan", "/api/scan"):
+            auth = self.headers.get("Authorization", "")
+            if TOKEN and auth != f"Bearer {TOKEN}":
+                self.send_response(401)
+                self.end_headers()
+                self.wfile.write(b'{"error":"Unauthorized"}')
+                return
+
+            try:
+                subprocess.run(["/usr/local/bin/dnp-probe-report"], check=True, timeout=15)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"ok":true,"message":"Scan completed"}')
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == "__main__":
+    server = http.server.HTTPServer(("0.0.0.0", PORT), ProbeHandler)
+    server.serve_forever()
+EOF
+  chmod +x /usr/local/bin/dnp-probe-agent
+
+  cat <<EOF > /etc/systemd/system/dn42-probe-agent.service
+[Unit]
+Description=AkiLab DN42 Remote Probe Trigger Agent
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/bird-lgproxy.env
+ExecStart=/usr/bin/python3 /usr/local/bin/dnp-probe-agent
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
   if command -v systemctl &>/dev/null; then
     systemctl daemon-reload
     systemctl enable --now dn42-probe-sync.timer >/dev/null 2>&1 || true
+    systemctl enable --now dn42-probe-agent.service >/dev/null 2>&1 || true
     # 立即执行一次上报
     /usr/local/bin/dnp-probe-report || true
-    echo -e "${GREEN}✓ 端口自动同步服务已就绪 (每 10 分钟自动向 Core 主站同步)${NC}"
+    echo -e "${GREEN}✓ 端口自动同步服务已就绪 (每 1 小时自动同步，且支持主控面板即时下发指令)${NC}"
   fi
 fi
 

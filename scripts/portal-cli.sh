@@ -134,11 +134,19 @@ case "$1" in
     ;;
 
   scan|scan-ports)
-    echo -e "${CYAN}🔍 正在执行系统级深度扫描 (ss -tulnp) 并自动对齐防冲突账本...${NC}"
+    echo -e "${CYAN}🔍 正在执行全网深度扫描 (ss -tulnp) 并自动下发指令同步所有节点...${NC}"
     node -e "
-      import('${PORTAL_DIR}/server/sessionManager.js').then(m => {
+      import('${PORTAL_DIR}/server/sessionManager.js').then(async m => {
         const res = m.initPortLedgerWithBaselineScan();
-        console.log('\x1b[32m✓ 扫描完成：当前节点 (' + (res.localId || 'JP07').toUpperCase() + ') 已精准同步 ' + res.count + ' 个存量监听端口！\x1b[0m');
+        console.log('\x1b[32m✓ 本地节点 (' + (res.localId || 'JP07').toUpperCase() + ') 已完成物理扫描并精准同步 ' + res.count + ' 个监听端口！\x1b[0m');
+        
+        const remoteRes = await m.triggerAllRemoteProbesScan();
+        if (remoteRes && remoteRes.length > 0) {
+          const successNodes = remoteRes.filter(r => r.success).map(r => r.code);
+          if (successNodes.length > 0) {
+            console.log('\x1b[32m📡 远端探针联动：已成功向远端节点 [' + successNodes.join(', ') + '] 下发指令并完成即时同步！\x1b[0m');
+          }
+        }
         process.exit(0);
       }).catch(err => {
         console.error(err);
@@ -148,7 +156,7 @@ case "$1" in
     chown -R dnpeering:dnpeering "${PORTAL_DIR}/server/data" 2>/dev/null || true
     chmod 644 "${PORTAL_DIR}/server/data/port_ledger.json" 2>/dev/null || true
     echo ""
-    echo -e "${CYAN}📊 整理后的端口占用账本明细（服务 + 端口）：${NC}"
+    echo -e "${CYAN}📊 整理后的全网端口占用账本明细（服务 + 端口）：${NC}"
     "${PORTAL_DIR}/scripts/portal-cli.sh" p
     ;;
 
