@@ -295,14 +295,20 @@ function normalizeConfig(raw) {
 
   // Contacts mapping
   if (Array.isArray(raw.contacts) && raw.contacts.length > 0) {
-    res.contacts = raw.contacts.map((c) => ({
-      platform: c.platform || 'Contact',
-      handle: c.handle || '',
-      link: (c.link && c.link !== '#') ? c.link : '',
-      type: c.type || (c.platform ? c.platform.toLowerCase() : 'other'),
-      responseTime: c.response_time || c.responseTime || '< 12 小时',
-      preferred: !!c.preferred,
-    }));
+    res.contacts = raw.contacts.map((c) => {
+      let link = (c.link && c.link !== '#') ? String(c.link).trim() : '';
+      if (link.includes('dn42.dev/whois') || link.includes('.dn42/')) {
+        link = '';
+      }
+      return {
+        platform: c.platform || 'Contact',
+        handle: c.handle || '',
+        link,
+        type: c.type || (c.platform ? c.platform.toLowerCase() : 'other'),
+        responseTime: c.response_time || c.responseTime || '< 12 小时',
+        preferred: !!c.preferred,
+      };
+    });
   }
 
   // Communities mapping

@@ -41,10 +41,17 @@ export const Footer: React.FC = () => {
   };
 
   const resolveContactLink = (item: { platform: string; handle: string; link?: string; type?: string }) => {
-    if (item.link && item.link.trim() && item.link.trim() !== '#') return item.link.trim();
     const t = (item.type || '').toLowerCase();
     const p = (item.platform || '').toLowerCase();
     const cleanHandle = (item.handle || '').trim();
+
+    // If explicit valid link is provided, sanitize legacy broken patterns
+    if (item.link && item.link.trim() && item.link.trim() !== '#') {
+      const l = item.link.trim();
+      if (!l.includes('dn42.dev/whois') && !l.includes('.dn42/')) {
+        return l;
+      }
+    }
 
     if (t === 'telegram' || p.includes('telegram')) {
       return `https://t.me/${cleanHandle.replace(/^@/, '')}`;
@@ -55,7 +62,7 @@ export const Footer: React.FC = () => {
     if (t === 'matrix' || p.includes('matrix')) {
       return `https://matrix.to/#/${cleanHandle}`;
     }
-    if (t === 'whois' || t === 'registry' || p.includes('whois')) {
+    if (t === 'whois' || t === 'registry' || p.includes('whois') || cleanHandle.includes('DN42') || cleanHandle.includes('MNT')) {
       return `https://explorer.burble.com/#/${encodeURIComponent(cleanHandle)}`;
     }
     if (cleanHandle.startsWith('http://') || cleanHandle.startsWith('https://')) {
