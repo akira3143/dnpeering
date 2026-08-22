@@ -56,7 +56,7 @@ export const Footer: React.FC = () => {
       return `https://matrix.to/#/${cleanHandle}`;
     }
     if (t === 'whois' || t === 'registry' || p.includes('whois')) {
-      return `https://explorer.burble.dn42/services/whois/?search=${encodeURIComponent(cleanHandle)}`;
+      return `https://explorer.burble.com/services/whois/?search=${encodeURIComponent(cleanHandle)}`;
     }
     if (cleanHandle.startsWith('http://') || cleanHandle.startsWith('https://')) {
       return cleanHandle;
@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
 
   const effectiveWhoisUrl =
     networkMeta.dn42WhoisUrl ||
-    `https://explorer.burble.dn42/services/whois/?search=${encodeURIComponent(networkMeta.asn || 'AS4242423143')}`;
+    `https://explorer.burble.com/services/whois/?search=${encodeURIComponent(networkMeta.asn || 'AS4242423143')}`;
 
   return (
     <footer id="contact" className="w-full border-t border-white/10 bg-[#05070c] py-12 mt-12 text-xs text-slate-400 font-sans scroll-mt-20">
