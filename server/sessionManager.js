@@ -119,12 +119,24 @@ if (typeof scanTimer?.unref === 'function') {
   scanTimer.unref();
 }
 
-// Helper to safely load JSON
+/**
+ * Safely strips single-line and multi-line comments and trailing commas from JSON strings (JSONC)
+ */
+function stripJsonComments(str) {
+  if (!str) return '{}';
+  return str
+    .replace(/("(?:\\.|[^"\\])*")|(\/\/[^\r\n]*|#[^\r\n]*|\/\*[\s\S]*?\*\/)/g, (match, strLiteral) => {
+      return strLiteral || '';
+    })
+    .replace(/,\s*([\]}])/g, '$1');
+}
+
+// Helper to safely load JSON (supports JSONC comments and trailing commas)
 function loadJson(filePath, defaultValue = {}) {
   try {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(content || '{}');
+      return JSON.parse(stripJsonComments(content));
     }
   } catch (err) {
     console.error(`Error reading ${filePath}:`, err);
