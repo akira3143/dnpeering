@@ -43,20 +43,24 @@ export function scanBaselineExistingPorts() {
   } catch {}
 
   // 2. Map active WireGuard kernel interfaces via `wg show all listen-port`
-  try {
-    const wgOutput = execFileSync('wg', ['show', 'all', 'listen-port'], { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] });
-    const lines = wgOutput.trim().split('\n');
-    for (const line of lines) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        const ifaceName = parts[0];
-        const port = parseInt(parts[1], 10);
-        if (!isNaN(port) && port >= 10000 && port <= 65535) {
-          wgNameMap.set(port, ifaceName);
+  const wgBins = ['wg', '/usr/bin/wg', '/usr/sbin/wg', '/sbin/wg', '/usr/local/bin/wg'];
+  for (const bin of wgBins) {
+    try {
+      const wgOutput = execFileSync(bin, ['show', 'all', 'listen-port'], { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] });
+      const lines = wgOutput.trim().split('\n');
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          const ifaceName = parts[0];
+          const port = parseInt(parts[1], 10);
+          if (!isNaN(port) && port >= 10000 && port <= 65535) {
+            wgNameMap.set(port, ifaceName);
+          }
         }
       }
-    }
-  } catch {}
+      break; // Succeeded
+    } catch {}
+  }
 
   // 3. Primary Core Scanner: `ss -tulnp`
   try {

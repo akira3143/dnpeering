@@ -89,9 +89,9 @@ export function initPortLedgerWithBaselineScan(targetNodeId) {
           scannedAt: new Date().toISOString(),
         };
         totalUpdated++;
-      } else if (existing.name === 'udp_service' || existing.name === 'udp_in_use') {
+      } else if (existing.status === 'existing') {
         // Upgrade generic label if specific wireguard interface name was detected
-        if (item.name !== 'udp_service' && item.name !== 'udp_in_use') {
+        if (item.name && item.name !== 'wireguard' && item.name !== 'udp_service' && item.name !== 'udp_in_use') {
           existing.label = item.label;
           existing.name = item.name;
           existing.source = item.source;
