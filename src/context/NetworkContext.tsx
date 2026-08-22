@@ -49,6 +49,14 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     fetchMeta();
   }, [fetchMeta]);
 
+  useEffect(() => {
+    if (networkMeta?.networkName && networkMeta.networkName !== 'Example DN42 Network') {
+      document.title = networkMeta.networkName;
+    } else {
+      document.title = 'AkiLab Networks';
+    }
+  }, [networkMeta?.networkName]);
+
   /**
    * Deterministic Port Resolution with Dynamic Nodes & Meta
    */
