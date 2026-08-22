@@ -56,6 +56,8 @@ case "$1" in
     npm install --loglevel=error
     npm run build
     systemctl restart "${SERVICE_NAME}"
+    systemctl is-active bird-lgproxy &>/dev/null && systemctl restart bird-lgproxy 2>/dev/null || true
+    systemctl is-active dn42-probe-agent &>/dev/null && systemctl restart dn42-probe-agent 2>/dev/null || true
     echo -e "${GREEN}✓ 升级完成并已成功热加载！${NC}"
     ;;
 
@@ -160,6 +162,15 @@ case "$1" in
     "${PORTAL_DIR}/scripts/portal-cli.sh" p
     ;;
 
+  probe|lg)
+    echo -e "${CYAN}🦅 正在运行 Looking Glass 探针配置与管理脚本...${NC}"
+    if [ -f "${PORTAL_DIR}/scripts/install-probe.sh" ]; then
+      bash "${PORTAL_DIR}/scripts/install-probe.sh"
+    else
+      curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash
+    fi
+    ;;
+
   uninstall|rm)
     if [ -f "${PORTAL_DIR}/scripts/uninstall.sh" ]; then
       bash "${PORTAL_DIR}/scripts/uninstall.sh"
@@ -192,7 +203,8 @@ case "$1" in
     echo -e "  ${YELLOW}dnp p${NC}     (ports)     - 查看已使用与已锁定端口明细清单"
     echo -e "  ${YELLOW}dnp r${NC}     (restart)   - 重启门户服务"
     echo -e "  ${YELLOW}dnp u${NC}     (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
-    echo -e "  ${YELLOW}dnp scan${NC}  (scan)      - 重新执行一次系统 WireGuard 端口基线扫描"
+    echo -e "  ${YELLOW}dnp scan${NC}  (scan)      - 触发全网端口深度扫描 (ss -tulnp 并自动下发指令)"
+    echo -e "  ${YELLOW}dnp probe${NC} (probe)     - 安装/刷新 Looking Glass 探针套件"
     echo -e "  ${YELLOW}dnp clean${NC} (clean)     - 扫描并清理超过 7 天未建立会话并释放端口"
     echo -e "  ${YELLOW}dnp e${NC}     (env)       - 编辑 .env 私密密钥与 Telegram Token"
     echo -e "  ${YELLOW}dnp rm${NC}    (uninstall) - 干净卸载与清理"
