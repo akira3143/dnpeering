@@ -144,10 +144,29 @@ function loadJson(filePath, defaultValue = {}) {
   return defaultValue;
 }
 
+const PORT_LEDGER_HEADER = `// ==============================================================================
+// 📊 AkiLab DN42 - WireGuard 端口占用与已锁定账本 (port_ledger.json)
+//
+// 💡 字段与类型说明 (type):
+//   • "in_use"   : 已使用 / 正式活跃 (老 Peer 或已审核通车的互联，永久占用)
+//   • "locked"   : 申请中 / 临时锁定 (前台申请待审核，7 天未连通可回收)
+//   • "reserved" : 预留端口 / 禁止分配 (管理员保留自用)
+//
+// 🔍 系统级端口占用扫描命令参考:
+//   • 快速查看监听: ss -tulnp | grep -E ":(2[0-9]{4}|3[0-9]{4})"
+//   • 查看 WG 端口: wg show all listen-port
+//   • 一键基线扫描: dnp scan
+// ==============================================================================
+`;
+
 // Helper to safely save JSON
 function saveJson(filePath, data) {
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    let content = JSON.stringify(data, null, 2);
+    if (filePath === PORT_LEDGER_FILE) {
+      content = PORT_LEDGER_HEADER + content;
+    }
+    fs.writeFileSync(filePath, content, 'utf-8');
   } catch (err) {
     console.error(`Error writing ${filePath}:`, err);
   }
