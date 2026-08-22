@@ -259,8 +259,8 @@ function normalizeConfig(raw) {
       routingPolicy: n.routing_policy || n.routingPolicy || res.network.routingPolicy,
       bgpMode: n.bgp_mode || n.bgpMode || res.network.bgpMode,
       portFormulaDisplay: n.port_formula || n.portFormulaDisplay || res.network.portFormulaDisplay,
-      lookingGlassUrl: n.looking_glass_url || n.lookingGlassUrl || res.network.lookingGlassUrl,
-      dn42WhoisUrl: n.whois_url || n.dn42WhoisUrl || `https://explorer.burble.dn42/services/whois/?search=AS${cleanAsn}`,
+      lookingGlassUrl: n.looking_glass_url || n.lookingGlassUrl || '',
+      dn42WhoisUrl: n.whois_url || n.dn42_whois_url || n.dn42WhoisUrl || `https://explorer.burble.com/#/AS${cleanAsn}`,
     };
   }
 
@@ -298,7 +298,7 @@ function normalizeConfig(raw) {
     res.contacts = raw.contacts.map((c) => ({
       platform: c.platform || 'Contact',
       handle: c.handle || '',
-      link: c.link || '#',
+      link: (c.link && c.link !== '#') ? c.link : '',
       type: c.type || (c.platform ? c.platform.toLowerCase() : 'other'),
       responseTime: c.response_time || c.responseTime || '< 12 小时',
       preferred: !!c.preferred,

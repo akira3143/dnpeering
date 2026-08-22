@@ -41,7 +41,7 @@ export const Footer: React.FC = () => {
   };
 
   const resolveContactLink = (item: { platform: string; handle: string; link?: string; type?: string }) => {
-    if (item.link && item.link.trim()) return item.link.trim();
+    if (item.link && item.link.trim() && item.link.trim() !== '#') return item.link.trim();
     const t = (item.type || '').toLowerCase();
     const p = (item.platform || '').toLowerCase();
     const cleanHandle = (item.handle || '').trim();
