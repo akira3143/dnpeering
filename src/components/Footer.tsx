@@ -2,7 +2,7 @@ import React from 'react';
 import { useNetwork } from '../context/NetworkContext';
 import { useToast } from './Toast';
 import { CURRENT_BRAND_LOGO } from '../utils/brandLogo';
-import { ArrowUp, ExternalLink, Send, Mail, MessageSquare, Copy } from 'lucide-react';
+import { ArrowUp, ExternalLink, Send, Mail, MessageSquare, Globe, Copy, Shield } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { networkMeta, contacts } = useNetwork();
@@ -12,18 +12,61 @@ export const Footer: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const getPlatformIcon = (type: string) => {
-    switch (type) {
-      case 'telegram':
-        return <Send className="w-4 h-4 text-cyan-400" />;
-      case 'email':
-        return <Mail className="w-4 h-4 text-purple-400" />;
-      case 'matrix':
-        return <MessageSquare className="w-4 h-4 text-emerald-400" />;
-      default:
-        return <ExternalLink className="w-4 h-4 text-slate-400" />;
+  const scrollToLookingGlass = (e: React.MouseEvent) => {
+    if (!networkMeta.lookingGlassUrl) {
+      e.preventDefault();
+      const el = document.querySelector('#looking-glass');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
+
+  const getPlatformIcon = (type: string, platform: string = '') => {
+    const t = (type || '').toLowerCase();
+    const p = (platform || '').toLowerCase();
+    if (t === 'telegram' || p.includes('telegram')) {
+      return <Send className="w-4 h-4 text-cyan-400" />;
+    }
+    if (t === 'email' || p.includes('email') || p.includes('mail')) {
+      return <Mail className="w-4 h-4 text-purple-400" />;
+    }
+    if (t === 'matrix' || p.includes('matrix')) {
+      return <MessageSquare className="w-4 h-4 text-emerald-400" />;
+    }
+    if (t === 'whois' || t === 'registry' || p.includes('whois')) {
+      return <Shield className="w-4 h-4 text-amber-400" />;
+    }
+    return <Globe className="w-4 h-4 text-slate-400" />;
+  };
+
+  const resolveContactLink = (item: { platform: string; handle: string; link?: string; type?: string }) => {
+    if (item.link && item.link.trim()) return item.link.trim();
+    const t = (item.type || '').toLowerCase();
+    const p = (item.platform || '').toLowerCase();
+    const cleanHandle = (item.handle || '').trim();
+
+    if (t === 'telegram' || p.includes('telegram')) {
+      return `https://t.me/${cleanHandle.replace(/^@/, '')}`;
+    }
+    if (t === 'email' || p.includes('email') || p.includes('mail')) {
+      return `mailto:${cleanHandle}`;
+    }
+    if (t === 'matrix' || p.includes('matrix')) {
+      return `https://matrix.to/#/${cleanHandle}`;
+    }
+    if (t === 'whois' || t === 'registry' || p.includes('whois')) {
+      return `https://explorer.burble.dn42/services/whois/?search=${encodeURIComponent(cleanHandle)}`;
+    }
+    if (cleanHandle.startsWith('http://') || cleanHandle.startsWith('https://')) {
+      return cleanHandle;
+    }
+    return undefined;
+  };
+
+  const effectiveWhoisUrl =
+    networkMeta.dn42WhoisUrl ||
+    `https://explorer.burble.dn42/services/whois/?search=${encodeURIComponent(networkMeta.asn || 'AS4242423143')}`;
 
   return (
     <footer id="contact" className="w-full border-t border-white/10 bg-[#05070c] py-12 mt-12 text-xs text-slate-400 font-sans scroll-mt-20">
@@ -62,48 +105,51 @@ export const Footer: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {contacts.map((item) => (
-                <div
-                  key={item.platform}
-                  className="p-3 rounded-xl bg-black/50 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-2"
-                >
-                  <div className="flex items-center gap-2.5 overflow-hidden">
-                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                      {getPlatformIcon(item.type)}
-                    </div>
-                    <div className="overflow-hidden">
-                      <div className="text-white text-xs font-semibold flex items-center gap-1">
-                        <span>{item.platform}</span>
-                        {item.preferred && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                        )}
+              {contacts.map((item) => {
+                const targetHref = resolveContactLink(item);
+                return (
+                  <div
+                    key={item.platform}
+                    className="p-3 rounded-xl bg-black/50 border border-white/10 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-2"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                        {getPlatformIcon(item.type, item.platform)}
                       </div>
-                      <div className="font-mono text-[11px] text-slate-400 truncate">{item.handle}</div>
+                      <div className="overflow-hidden">
+                        <div className="text-white text-xs font-semibold flex items-center gap-1">
+                          <span>{item.platform}</span>
+                          {item.preferred && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                          )}
+                        </div>
+                        <div className="font-mono text-[11px] text-slate-400 truncate">{item.handle}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => copyToClipboard(item.handle, item.platform)}
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                        title="复制"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      {targetHref && (
+                        <a
+                          href={targetHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 transition-colors"
+                          title="打开链接"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => copyToClipboard(item.handle, item.platform)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                      title="复制"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                    {item.link && (
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 transition-colors"
-                        title="打开"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -112,28 +158,25 @@ export const Footer: React.FC = () => {
         {/* Middle: Fast Links & Back to Top */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-5 text-xs font-mono">
-            {networkMeta.dn42WhoisUrl && (
-              <a
-                href={networkMeta.dn42WhoisUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
-              >
-                <span>DN42 Registry WHOIS</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
-            {networkMeta.lookingGlassUrl && (
-              <a
-                href={networkMeta.lookingGlassUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
-              >
-                <span>Looking Glass</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
+            <a
+              href={effectiveWhoisUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+            >
+              <span>DN42 Registry WHOIS</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <a
+              href={networkMeta.lookingGlassUrl || '#looking-glass'}
+              onClick={scrollToLookingGlass}
+              target={networkMeta.lookingGlassUrl ? '_blank' : undefined}
+              rel={networkMeta.lookingGlassUrl ? 'noreferrer' : undefined}
+              className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+            >
+              <span>Looking Glass</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
             <a
               href="https://dn42.dev"
               target="_blank"
