@@ -16,61 +16,102 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 /**
+ * Determines the local node ID running on the current host machine
+ */
+export function getLocalNodeId() {
+  try {
+    const activeCfg = getActiveConfig();
+    const nodes = activeCfg?.nodes || [];
+    // 1. Match node pointing to 127.0.0.1 or localhost in lgProxyUrl
+    const localNode = nodes.find(n => 
+      n.lgProxyUrl && (n.lgProxyUrl.includes('127.0.0.1') || n.lgProxyUrl.includes('localhost'))
+    );
+    if (localNode?.id) return String(localNode.id).toLowerCase();
+
+    // 2. Match process.env.LG_DEFAULT_NODE
+    if (process.env.LG_DEFAULT_NODE) return String(process.env.LG_DEFAULT_NODE).toLowerCase();
+
+    // 3. Fallback to first node
+    return nodes[0]?.id ? String(nodes[0].id).toLowerCase() : 'jp07';
+  } catch {
+    return 'jp07';
+  }
+}
+
+/**
  * Baseline scan executed ONCE on server startup
- * Silently imports pre-existing WireGuard ports into port_ledger.json without overwriting
+ * Strictly records ports discovered on THIS local machine into THIS local node only
  */
 export function initPortLedgerWithBaselineScan(targetNodeId) {
   try {
-    const activeCfg = getActiveConfig();
+    const localId = targetNodeId ? String(targetNodeId).toLowerCase() : getLocalNodeId();
     const portLedger = loadJson(PORT_LEDGER_FILE, {});
-    const nodes = (activeCfg?.nodes && activeCfg.nodes.length > 0) ? activeCfg.nodes : [{ id: 'jp07' }];
+    const activeCfg = getActiveConfig();
+    const nodes = activeCfg?.nodes || [];
     
+    // Clean up historical duplicate pollution on other remote nodes
+    for (const node of nodes) {
+      const nid = String(node.id || node.code || '').toLowerCase();
+      if (nid && nid !== localId && portLedger[nid]) {
+        // If remote node has existing/system_socket baseline entries that were wrongly duplicated, clean them
+        for (const [pKey, pVal] of Object.entries(portLedger[nid])) {
+          if (pVal?.source === 'system_socket' || pVal?.source === 'procfs_udp' || (pVal?.status === 'existing' && !pVal?.asn)) {
+            delete portLedger[nid][pKey];
+          }
+        }
+      }
+    }
+
+    if (!portLedger[localId]) {
+      portLedger[localId] = {};
+    }
+
     const baselinePorts = scanBaselineExistingPorts();
-    if (baselinePorts.length === 0) return { updated: false, count: 0, items: [] };
+    if (baselinePorts.length === 0) {
+      saveJson(PORT_LEDGER_FILE, portLedger);
+      return { updated: false, count: 0, items: [], localId };
+    }
 
     let totalUpdated = 0;
-    
-    // Determine target node IDs from config (e.g. jp07, jp7, etc.)
-    const targetNodeIds = targetNodeId 
-      ? [String(targetNodeId).toLowerCase()] 
-      : nodes.map(n => String(n.id || n.code || 'jp07').toLowerCase());
 
-    for (const nodeId of targetNodeIds) {
-      if (!portLedger[nodeId]) {
-        portLedger[nodeId] = {};
-      }
+    for (const item of baselinePorts) {
+      const portKey = String(item.port);
+      const existing = portLedger[localId][portKey];
 
-      for (const item of baselinePorts) {
-        const portKey = String(item.port);
-        if (!portLedger[nodeId][portKey]) {
-          portLedger[nodeId][portKey] = {
-            label: item.label,
-            port: item.port,
-            type: 'in_use',
-            status: 'existing',
-            name: item.name,
-            source: item.source,
-            scannedAt: new Date().toISOString(),
-          };
+      if (!existing) {
+        portLedger[localId][portKey] = {
+          label: item.label,
+          port: item.port,
+          type: 'in_use',
+          status: 'existing',
+          name: item.name,
+          source: item.source,
+          scannedAt: new Date().toISOString(),
+        };
+        totalUpdated++;
+      } else if (existing.name === 'udp_service' || existing.name === 'udp_in_use') {
+        // Upgrade generic label if specific wireguard interface name was detected
+        if (item.name !== 'udp_service' && item.name !== 'udp_in_use') {
+          existing.label = item.label;
+          existing.name = item.name;
+          existing.source = item.source;
           totalUpdated++;
         }
       }
     }
 
-    if (totalUpdated > 0) {
-      saveJson(PORT_LEDGER_FILE, portLedger);
-    }
-    return { updated: totalUpdated > 0, count: baselinePorts.length, items: baselinePorts };
+    saveJson(PORT_LEDGER_FILE, portLedger);
+    return { updated: totalUpdated > 0, count: baselinePorts.length, items: baselinePorts, localId };
   } catch (err) {
     console.error('Error during baseline port scan:', err);
-    return { updated: false, count: 0, items: [] };
+    return { updated: false, count: 0, items: [], localId: 'jp07' };
   }
 }
 
-// Silently perform baseline scan on initial server startup
+// Silently perform baseline scan on initial server startup for local node
 initPortLedgerWithBaselineScan();
 
-// Periodic baseline scan every 1 hour (incremental append only:账本优先，仅记录新发现端口，绝不覆盖或删除已有账本记录)
+// Periodic baseline scan every 1 hour (incremental append only: 仅限本机本地节点，绝不污染远端 PoP 节点)
 setInterval(() => {
   initPortLedgerWithBaselineScan();
 }, 60 * 60 * 1000);
