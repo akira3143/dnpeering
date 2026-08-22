@@ -183,25 +183,25 @@ async function runTests() {
     console.log('  ⏹️ Mock server stopped.\n');
   }
 
-  // --- Phase 2: Test Offline / Dev Simulation Fallback ---
-  console.log('📦 Phase 2: Testing Resilient Dev Simulation (When Probe is Offline)...');
+  // --- Phase 2: Test Offline Fallback ---
+  console.log('📦 Phase 2: Testing Strict Live Probe Verification (When Probe is Offline)...');
 
-  // Test 2.1: Route Simulation
+  // Test 2.1: Route Query when Offline
   const offlineRoute = await handleLookingGlassQuery({
     nodeId: 'jp07',
     commandType: 'route',
     target: '172.20.0.53',
   });
-  assert(offlineRoute.status === 200 && offlineRoute.data.isLive === false, 'Offline node triggers fallback to Simulation mode');
-  assert(offlineRoute.data.output.includes('Table master4:'), 'Simulation engine produces valid BIRD routing table output');
+  assert(offlineRoute.status === 200 && offlineRoute.data.isLive === false, 'Offline node is correctly marked as isLive: false');
+  assert(offlineRoute.data.output.includes('探针离线') || offlineRoute.data.output.includes('不可达') || offlineRoute.data.output.includes('未部署'), 'Offline node outputs clear offline diagnostic message');
 
-  // Test 2.2: Ping Simulation
+  // Test 2.2: Ping when Offline
   const offlinePing = await handleLookingGlassQuery({
     nodeId: 'us01',
     commandType: 'ping',
-    target: '172.20.14.2',
+    target: '172.20.0.53',
   });
-  assert(offlinePing.status === 200 && offlinePing.data.output.includes('rtt min/avg/max/mdev'), 'Simulation engine generates realistic ping latency stats');
+  assert(offlinePing.status === 200 && offlinePing.data.isLive === false, 'Offline node ping is correctly marked as isLive: false');
 
   // --- Phase 3: Security & Input Sanitization ---
   console.log('\n📦 Phase 3: Testing Security & Anti-Injection Sanitization...');
