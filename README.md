@@ -26,19 +26,13 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/ins
 ```
 
 #### 2. 边缘 PoP 节点探针部署 (Probe Agent)
-在各个路由节点服务器上执行（自动下载对应架构的 `bird-lgproxy` 二进制、寻址 BIRD socket 并注册守护进程）：
+主站部署完成后，直接在主站服务器执行：
 
 ```bash
-# 交互式向导安装 (支持本地模式 / 远端 PoP 模式选择)
-curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash
-
-# 或指定参数静默安装:
-# 主站同机模式:
-curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen 127.0.0.1:5000
-
-# 远端节点模式 (带安全 Token):
-curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen 0.0.0.0:5000 --token your_secret_token
+dnp probe
 ```
+
+系统会自动根据 `portal.config.yaml` 生成所有远端 PoP 节点的**「一键无人值守安装指令」**（自动携带通信地址、鉴权 Token 与节点代号，类似哪吒探针）。直接复制并在对应远端 VPS 终端粘贴执行即可完成部署与自动联动。
 
 ---
 
@@ -49,12 +43,13 @@ curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/ins
 | 极简命令 | 完整命令 | 说明 |
 | :--- | :--- | :--- |
 | **`dnp c`** | `dnp config` | 快速编辑节点与 ASN 统一配置（保存即全站生效，无需重启） |
+| **`dnp probe`** | `dnp probe [node_id]` | 一键生成远端探针无人值守安装指令（Like 哪吒探针） |
 | **`dnp l`** | `dnp logs` | 查看实时滚动运行日志（谁在查 LG、谁在申请 Peer） |
 | **`dnp s`** | `dnp status` | 查看服务运行状态与内存占用 |
 | **`dnp p`** | `dnp ports` | 查看已使用与已锁定端口明细清单 |
 | **`dnp r`** | `dnp restart` | 重启门户服务 |
 | **`dnp u`** | `dnp update` | 从 GitHub 拉取最新版本并自动重新构建热升级 |
-| **`dnp scan`** | `dnp scan` | 重新执行一次系统 WireGuard 端口基线扫描 |
+| **`dnp scan`** | `dnp scan` | 重新执行一次系统 WireGuard 端口基线扫描并联动远端探针 |
 | **`dnp clean`** | `dnp clean` | 扫描并清理超过 7 天未建立会话并释放端口 |
 | **`dnp e`** | `dnp env` | 快速编辑 `.env` 私密密钥与 Telegram Token |
 | **`dnp rm`** | `dnp uninstall` | 启动一键完全干净卸载与清理向导 |
