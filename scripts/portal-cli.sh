@@ -162,13 +162,86 @@ case "$1" in
     "${PORTAL_DIR}/scripts/portal-cli.sh" p
     ;;
 
-  probe|lg)
-    echo -e "${CYAN}🦅 正在运行 Looking Glass 探针配置与管理脚本...${NC}"
-    if [ -f "${PORTAL_DIR}/scripts/install-probe.sh" ]; then
-      bash "${PORTAL_DIR}/scripts/install-probe.sh"
-    else
-      curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash
-    fi
+  probe|lg|agent)
+    TARGET_NODE="${2:-}"
+    node -e "
+      import('${PORTAL_DIR}/server/configLoader.js').then(async m => {
+        const fs = require('fs');
+        const path = require('path');
+        const crypto = require('crypto');
+        
+        // 1. 读取 .env 配置
+        const envFile = '${PORTAL_DIR}/.env';
+        let envContent = '';
+        try { envContent = fs.readFileSync(envFile, 'utf-8'); } catch {}
+        
+        let tokenMatch = envContent.match(/^PROBE_AUTH_TOKEN\s*=\s*(.+)$/m) || envContent.match(/^BIRD_LG_TOKEN\s*=\s*(.+)$/m);
+        let token = tokenMatch ? tokenMatch[1].trim().replace(/^[\"']|[\"']$/g, '') : '';
+        
+        if (!token) {
+          token = crypto.randomBytes(16).toString('hex');
+          fs.appendFileSync(envFile, '\nPROBE_AUTH_TOKEN=\"' + token + '\"\n');
+          console.log('\x1b[33m⚡ 已自动为您生成并保存全局通信鉴权密钥 PROBE_AUTH_TOKEN 到 .env\x1b[0m');
+        }
+
+        // 2. 获取主控 Core URL
+        let coreUrlMatch = envContent.match(/^PORTAL_CORE_URL\s*=\s*(.+)$/m);
+        let coreUrl = coreUrlMatch ? coreUrlMatch[1].trim().replace(/^[\"']|[\"']$/g, '') : '';
+        
+        const config = m.loadUnifiedConfig();
+        const nodes = config.nodes || [];
+        const network = config.network || {};
+
+        if (!coreUrl) {
+          // 尝试查找第一个节点 (如本地主节点) 的内网 IPv4 或域名
+          const hubNode = nodes.find(n => n.features && n.features.some(f => f.includes('Hub') || f.includes('Core'))) || nodes[0];
+          if (hubNode && hubNode.ipv4) {
+            coreUrl = 'http://' + hubNode.ipv4 + ':4242';
+          } else {
+            coreUrl = 'http://127.0.0.1:4242';
+          }
+        }
+
+        const targetArg = '${TARGET_NODE}'.toLowerCase().trim();
+
+        if (targetArg && targetArg !== 'gen' && targetArg !== 'list') {
+          const matched = nodes.find(n => n.id.toLowerCase() === targetArg || n.code.toLowerCase() === targetArg);
+          if (matched) {
+            console.log('\n\x1b[36m==================================================================\x1b[0m');
+            console.log('  🌐 节点专属探针一键安装指令 (\x1b[32m' + matched.flag + ' ' + matched.name + '\x1b[0m)');
+            console.log('\x1b[36m==================================================================\x1b[0m');
+            console.log('\x1b[33m👉 请直接复制以下单行命令，粘贴到目标 VPS 终端回车执行即可：\x1b[0m\n');
+            const isLocal = matched.id === 'jp07' || matched.id.includes('local') || matched.id.includes('hub');
+            const listenIp = isLocal ? '127.0.0.1:5000' : '0.0.0.0:5000';
+            const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen ' + listenIp + ' --token \"' + token + '\" --core-url \"' + coreUrl + '\" --node-id \"' + matched.id + '\"';
+            console.log('\x1b[1m\x1b[32m' + cmd + '\x1b[0m\n');
+            process.exit(0);
+          }
+        }
+
+        console.log('\n\x1b[36m==================================================================\x1b[0m');
+        console.log('  🦅 AkiLab DN42 - 探针套件与远端一键安装指令生成器 (Like Nezha)');
+        console.log('\x1b[36m==================================================================\x1b[0m');
+        console.log('  主控端 Core URL: \x1b[32m' + coreUrl + '\x1b[0m (用于远端节点自动回传已占用端口与状态)');
+        console.log('  通信鉴权 Token : \x1b[33m' + token + '\x1b[0m');
+        console.log('\n\x1b[36m👉 各节点专属一键无人值守安装指令（复制并在目标机器回车执行）：\x1b[0m\n');
+
+        nodes.forEach((n, idx) => {
+          const isLocal = idx === 0 || n.id === 'jp07';
+          const listenIp = isLocal ? '127.0.0.1:5000' : '0.0.0.0:5000';
+          const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen ' + listenIp + ' --token \"' + token + '\" --core-url \"' + coreUrl + '\" --node-id \"' + n.id + '\"';
+          
+          console.log('\x1b[36m[' + (idx + 1) + '] ' + (n.flag || '🌐') + ' ' + n.code + ' - ' + n.name + ' (' + n.id + ')\x1b[0m');
+          console.log('    \x1b[32m' + cmd + '\x1b[0m\n');
+        });
+
+        console.log('\x1b[90m💡 提示: 执行 dnp probe <节点ID> (如 dnp probe us01) 可单独获取该节点命令。\x1b[0m\n');
+        process.exit(0);
+      }).catch(err => {
+        console.error(err);
+        process.exit(1);
+      });
+    "
     ;;
 
   uninstall|rm)
@@ -204,7 +277,7 @@ case "$1" in
     echo -e "  ${YELLOW}dnp r${NC}     (restart)   - 重启门户服务"
     echo -e "  ${YELLOW}dnp u${NC}     (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
     echo -e "  ${YELLOW}dnp scan${NC}  (scan)      - 触发全网端口深度扫描 (ss -tulnp 并自动下发指令)"
-    echo -e "  ${YELLOW}dnp probe${NC} (probe)     - 安装/刷新 Looking Glass 探针套件"
+    echo -e "  ${YELLOW}dnp probe${NC} [节点ID]  - 一键生成远端探针无人值守安装指令 (Like 哪吒探针)"
     echo -e "  ${YELLOW}dnp clean${NC} (clean)     - 扫描并清理超过 7 天未建立会话并释放端口"
     echo -e "  ${YELLOW}dnp e${NC}     (env)       - 编辑 .env 私密密钥与 Telegram Token"
     echo -e "  ${YELLOW}dnp rm${NC}    (uninstall) - 干净卸载与清理"
