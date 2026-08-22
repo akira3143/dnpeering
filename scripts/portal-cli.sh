@@ -48,7 +48,6 @@ case "$1" in
     npm run build
     systemctl restart "${SERVICE_NAME}"
     systemctl is-active bird-lgproxy &>/dev/null && systemctl restart bird-lgproxy 2>/dev/null || true
-    systemctl is-active dn42-agent &>/dev/null && systemctl restart dn42-agent 2>/dev/null || true
     echo -e "${GREEN}✓ 门户与探针系统已升级至最新版本并重启！${NC}"
     ;;
 
@@ -68,7 +67,7 @@ case "$1" in
     node "${PORTAL_DIR}/server/cliCommands.js" ports
     ;;
 
-  nodes|node|n|probe|lg|agent)
+  nodes|node|n|probe|lg)
     node "${PORTAL_DIR}/server/cliCommands.js" probe "${2:-}"
     ;;
 
@@ -102,15 +101,15 @@ case "$1" in
     echo -e "${CYAN}==================================================================${NC}"
     echo -e "极简用法: ${GREEN}dnp <单字母或指令>${NC}"
     echo ""
-    echo -e "  ${YELLOW}dnp n${NC}     (nodes)     - 查看全网节点清单与探针实时在线状态 (Node List)"
-    echo -e "  ${YELLOW}dnp probe${NC} [节点ID]  - 一键生成远端探针无人值守安装指令 (Like 哪吒探针)"
+    echo -e "  ${YELLOW}dnp n${NC}     (nodes)     - 查看全网节点清单与探针在线状态 (Node List)"
+    echo -e "  ${YELLOW}dnp probe${NC} [节点ID]  - 查看或生成指定节点 bird-lgproxy 官方探针部署指令"
     echo -e "  ${YELLOW}dnp c${NC}     (config)    - 快速编辑节点与 ASN 统一配置 (保存即生效)"
     echo -e "  ${YELLOW}dnp l${NC}     (logs)      - 查看实时滚动日志 (谁在查 LG、谁在申请 Peer)"
     echo -e "  ${YELLOW}dnp s${NC}     (status)    - 查看服务运行状态与内存开销"
     echo -e "  ${YELLOW}dnp p${NC}     (ports)     - 查看已使用与已锁定端口明细清单"
     echo -e "  ${YELLOW}dnp r${NC}     (restart)   - 重启门户服务"
     echo -e "  ${YELLOW}dnp u${NC}     (update)    - 一键拉取 GitHub 最新版本并自动重新构建"
-    echo -e "  ${YELLOW}dnp scan${NC}  (scan)      - 触发全网端口深度扫描 (ss -tulnp 并自动下发指令)"
+    echo -e "  ${YELLOW}dnp scan${NC}  (scan)      - 触发本地 WireGuard 端口基线扫描并同步账本"
     echo -e "  ${YELLOW}dnp clean${NC} (clean)     - 扫描并清理超过 7 天未建立会话并释放端口"
     echo -e "  ${YELLOW}dnp e${NC}     (env)       - 编辑 .env 私密密钥与 Telegram Token"
     echo -e "  ${YELLOW}dnp rm${NC}    (uninstall) - 干净卸载与清理"
