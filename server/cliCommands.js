@@ -243,8 +243,12 @@ export function handleCliScan() {
     });
   } catch {}
 
-  mergeProbeReportedPorts('jp07', localPorts);
-  console.log('\x1b[32m✓ 本地主节点 (jp07) 端口扫描完成，已合并入端口账本！\x1b[0m');
+  const config = getActiveConfig();
+  const hubNode = config?.nodes?.find((n) => n.features && n.features.some((f) => f.includes('Hub') || f.includes('Core'))) || config?.nodes?.[0];
+  const localNodeId = hubNode?.id || 'jp07';
+
+  mergeProbeReportedPorts(localNodeId, localPorts);
+  console.log('\x1b[32m✓ 本地主节点 (' + localNodeId + ') 端口扫描完成，已合并入端口账本！\x1b[0m');
 }
 
 export function handleCliClean() {
