@@ -420,8 +420,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
 
       showToast(
         data.isNew
-          ? `🎉 对等申请已成功送达管理员！会话 ID: ${data.sessionId}`
-          : `🔄 申请已更新至版本 v${data.version}！会话 ID: ${data.sessionId}`,
+          ? `🎉 对等互联申请已成功投递！会话 ID: ${data.sessionId}`
+          : `🔄 互联配置已更新至版本 v${data.version}！会话 ID: ${data.sessionId}`,
         'success'
       );
       
@@ -1078,14 +1078,14 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 truncate">
                     <span className="font-semibold text-emerald-200">
-                      {submittedInfo.isNew ? '🎉 申请已成功送达管理员！' : `🔄 申请已更新至 v${submittedInfo.version}！`}
+                      {submittedInfo.isNew ? '🎉 对等互联申请已成功投递！' : `🔄 互联配置已更新至 v${submittedInfo.version}！`}
                     </span>
                     <span className="font-mono text-slate-300 text-[11px]">
                       会话: <strong className="text-cyan-300">{submittedInfo.sessionId}</strong>
                     </span>
                   </div>
                   <span className="text-emerald-400/80 text-[11px] hidden lg:inline ml-auto">
-                    (管理员 Telegram 已收到即时通知)
+                    (节点已进入配置部署流水线)
                   </span>
                 </div>
               ) : (
@@ -1115,12 +1115,12 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>正在投递申请到 AkiLab...</span>
+                      <span>正在投递互联配置到节点...</span>
                     </>
                   ) : submittedInfo && cooldownSeconds > 0 ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>已送达 ({cooldownSeconds}s)</span>
+                      <span>已投递完成 ({cooldownSeconds}s)</span>
                     </>
                   ) : cooldownSeconds > 0 ? (
                     <>
