@@ -112,9 +112,12 @@ export function initPortLedgerWithBaselineScan(targetNodeId) {
 initPortLedgerWithBaselineScan();
 
 // Periodic baseline scan every 1 hour (incremental append only: 仅限本机本地节点，绝不污染远端 PoP 节点)
-setInterval(() => {
+const scanTimer = setInterval(() => {
   initPortLedgerWithBaselineScan();
 }, 60 * 60 * 1000);
+if (typeof scanTimer?.unref === 'function') {
+  scanTimer.unref();
+}
 
 // Helper to safely load JSON
 function loadJson(filePath, defaultValue = {}) {

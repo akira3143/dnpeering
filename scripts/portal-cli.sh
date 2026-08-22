@@ -104,6 +104,10 @@ case "$1" in
           }
           console.log('');
         }
+        process.exit(0);
+      }).catch(err => {
+        console.error(err);
+        process.exit(1);
       });
     "
     ;;
@@ -121,6 +125,10 @@ case "$1" in
             console.log('  - 会话 ' + s.sessionId + ' (ASN: AS' + s.asn + ', 端口: ' + s.hostPort + ', 节点: ' + s.nodeId + ')');
           }
         }
+        process.exit(0);
+      }).catch(err => {
+        console.error(err);
+        process.exit(1);
       });
     "
     ;;
@@ -131,6 +139,10 @@ case "$1" in
       import('${PORTAL_DIR}/server/sessionManager.js').then(m => {
         const res = m.initPortLedgerWithBaselineScan();
         console.log('\x1b[32m✓ 扫描完成：当前节点 (' + (res.localId || 'JP07').toUpperCase() + ') 已精准同步 ' + res.count + ' 个存量监听端口！\x1b[0m');
+        process.exit(0);
+      }).catch(err => {
+        console.error(err);
+        process.exit(1);
       });
     "
     chown -R dnpeering:dnpeering "${PORTAL_DIR}/server/data" 2>/dev/null || true
