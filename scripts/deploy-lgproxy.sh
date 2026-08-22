@@ -34,9 +34,18 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# 2. 检查必要的系统依赖
-apt-get update -qq
-apt-get install -y -qq curl iproute2 traceroute iputils-ping
+# 2. 检查必要的系统依赖 (兼容 Debian/Ubuntu, Alpine, RHEL/Fedora, Arch)
+if command -v apt-get >/dev/null 2>&1; then
+  apt-get update -qq && apt-get install -y -qq curl iproute2 traceroute iputils-ping || true
+elif command -v apk >/dev/null 2>&1; then
+  apk add --no-cache curl iproute2 traceroute iputils || true
+elif command -v dnf >/dev/null 2>&1; then
+  dnf install -y -q curl iproute traceroute iputils || true
+elif command -v yum >/dev/null 2>&1; then
+  yum install -y -q curl iproute traceroute iputils || true
+elif command -v pacman >/dev/null 2>&1; then
+  pacman -Sy --noconfirm curl iproute2 traceroute iputils || true
+fi
 
 # 3. 确定架构 (x86_64 / arm64)
 ARCH=$(uname -m)
@@ -108,7 +117,7 @@ if systemctl is-active --quiet bird-lgproxy; then
   echo "=========================================================="
   echo "🎉 bird-lgproxy 部署成功并已启动！"
   echo "  - 状态检查: systemctl status bird-lgproxy"
-  echo "  - 本地测试命令: curl http://${LISTEN_ADDR}/raw?q=show+status"
+  echo "  - 本地测试命令: curl \"http://${LISTEN_ADDR}/bird?q=show+status\""
   echo "=========================================================="
 else
   echo "❌ 服务启动异常，请查看日志: journalctl -u bird-lgproxy -e"

@@ -417,106 +417,40 @@ export function handleGetNetworkMeta() {
 /**
  * Handles POST /api/probe/report-ports
  * Allows remote PoP probes to report their local WireGuard & socket port usages to the Core hub
- */
-export function handleReportProbePorts(body, authHeader) {
-  if (!body || !body.nodeId || !Array.isArray(body.ports)) {
-    return { status: 400, data: { success: false, error: '缺少 nodeId 或 ports 列表' } };
-  }
-
-  const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
-  const configuredToken = process.env.PROBE_AUTH_TOKEN;
-
-  // Require explicit PROBE_AUTH_TOKEN configuration
-  if (!configuredToken) {
-    return { status: 503, data: { success: false, error: '探针上报未配置 (PROBE_AUTH_TOKEN not set)' } };
-  }
-
-  // Verify auth token with timing-safe comparison (accepts master token, node-specific derived token, or admin JWT)
-  let isTokenValid = false;
-  const nodeSpecificToken = crypto.createHmac('sha256', configuredToken).update(String(body.nodeId).toLowerCase().trim()).digest('hex').slice(0, 32);
-  if (token && configuredToken) {
-    try {
-      if (token.length === configuredToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken))) {
-        isTokenValid = true;
-      } else if (token.length === nodeSpecificToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken))) {
-        isTokenValid = true;
-      }
-    } catch { isTokenValid = false; }
-  }
-  if (!isTokenValid) {
-    // Fallback: check if it's a valid admin JWT
-    isTokenValid = !!verifyJwt(token)?.isAdmin;
-  }
-
-  if (!isTokenValid) {
-    return { status: 401, data: { success: false, error: '探针上报凭据无效 (Unauthorized probe token)' } };
-  }
-
-  const result = mergeProbeReportedPorts(body.nodeId, body.ports);
-  return { status: 200, data: { success: true, ...result } };
-}
-
 /**
  * Handles GET /api/probe/status
- * Returns live online status and latency for all nodes
+ * Returns live online status and latency for all nodes via bird-lgproxy HTTP probes
  */
 export function handleGetProbeStatus() {
-  try {
-    const { getConnectedNodesStatus } = awaitImportProbeWs();
-    const wsProbeMap = getConnectedNodesStatus ? getConnectedNodesStatus() : {};
-    const httpProbeMap = getHttpProbeStatuses ? getHttpProbeStatuses() : {};
-    return {
-      status: 200,
-      data: {
-        success: true,
-        probes: {
-          ...httpProbeMap,
-          ...wsProbeMap,
-        },
-      },
-    };
-  } catch (err) {
-    const httpProbeMap = getHttpProbeStatuses ? getHttpProbeStatuses() : {};
-    return {
-      status: 200,
-      data: {
-        success: true,
-        probes: httpProbeMap,
-      },
-    };
-  }
-}
-
-// Lazy helper to avoid circular reference
-let _probeWs = null;
-async function awaitImportProbeWs() {
-  if (!_probeWs) {
-    _probeWs = await import('./probeWsServer.js');
-  }
-  return _probeWs;
+  const probeMap = getHttpProbeStatuses ? getHttpProbeStatuses() : {};
+  return {
+    status: 200,
+    data: {
+      success: true,
+      probes: probeMap,
+    },
+  };
 }
 
 /**
  * Handles GET /api/probe/install-command
- * Dynamically computes one-click curl install command using request's Host / X-Forwarded-Host
+ * Dynamically computes official bird-lgproxy one-click installer command
  */
 export function handleGetProbeInstallCommand(reqUrl, reqHeaders) {
   const nodeId = (reqUrl.searchParams.get('nodeId') || 'jp07').toLowerCase().trim();
-  const host = reqHeaders['x-forwarded-host'] || reqHeaders['host'] || 'localhost:4242';
-  const proto = reqHeaders['x-forwarded-proto'] || (reqHeaders['referer'] && reqHeaders['referer'].startsWith('https') ? 'https' : 'http');
-  const masterUrl = `${proto}://${host}`;
-  const masterSecret = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN || '';
-  const nodeToken = masterSecret ? crypto.createHmac('sha256', masterSecret).update(nodeId).digest('hex').slice(0, 32) : '';
+  const proxyToken = process.env.LG_PROXY_TOKEN || '';
 
-  const command = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${masterUrl}" --token "${nodeToken || masterSecret}" --node-id "${nodeId}"`;
+  const command = proxyToken
+    ? `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/deploy-lgproxy.sh | sudo bash -s -- 0.0.0.0:5000 "${proxyToken}"`
+    : `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/deploy-lgproxy.sh | sudo bash -s -- 0.0.0.0:5000`;
 
   return {
     status: 200,
     data: {
       success: true,
       nodeId,
-      masterUrl,
-      nodeToken: nodeToken || masterSecret,
+      proxyPort: 5000,
+      hasToken: Boolean(proxyToken),
       command,
     },
   };

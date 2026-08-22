@@ -56,7 +56,7 @@ nodes:
       - "Extended Next Hop"
     notes: "东亚互联核心枢纽，推荐日本、香港、台湾等东亚地区接入。"
     occupied_ports: [20001, 20002]     # 预设或静态占用的 WireGuard 端口 (可选，系统亦会自动探测)
-    lg_proxy_url: ""                   # 可选: 传统 bird-lgproxy 探针直达地址 (留空则默认走反向 WebSocket 长连接)
+    lg_proxy_url: "http://127.0.0.1:5000" # 节点的 bird-lgproxy 探针地址 (留空则默认按 http://{endpoint}:5000 探测)
 
   - id: "us01"
     code: "US-1"

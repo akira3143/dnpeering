@@ -87,19 +87,24 @@ export async function handleCliProbe(targetNodeArg = '') {
     const probe = liveProbes[matched.id.toLowerCase()];
     const isOnline = isLocal || Boolean(probe && probe.online);
     const latency = probe?.latencyMs;
-    // Derive unique, tamper-proof per-node HMAC token
-    const nodeToken = crypto.createHmac('sha256', token).update(matched.id).digest('hex').slice(0, 32);
+    const proxyPort = matched.lgProxyUrl ? (matched.lgProxyUrl.match(/:(\d+)/)?.[1] || 5000) : 5000;
+    const proxyToken = process.env.LG_PROXY_TOKEN || '';
 
     console.log('\n\x1b[36m==================================================================\x1b[0m');
-    console.log('  🌐 节点专属探针配置与一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.code + ' - ' + matched.name + '\x1b[0m)');
+    console.log('  🦅 节点官方 bird-lgproxy 探针一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.code + ' - ' + matched.name + '\x1b[0m)');
     console.log('\x1b[36m==================================================================\x1b[0m');
     console.log('  节点代号 ID   : \x1b[33m' + matched.id + '\x1b[0m (Code: ' + matched.code + ')');
-    console.log('  当前探针状态 : ' + (isOnline ? ('\x1b[32m🟢 在线' + (isLocal ? ' (本地主节点)' : ' (' + (latency || 1) + 'ms)') + '\x1b[0m') : '\x1b[90m⚪ 离线 (未部署/未连接)\x1b[0m'));
-    console.log('  主控 Master  : \x1b[32m' + coreUrl + '\x1b[0m');
-    console.log('  节点独立 Token: \x1b[33m' + nodeToken + '\x1b[0m (专属 HMAC 独立签名，防止跨节点伪造)');
-    console.log('\n\x1b[33m👉 请直接复制以下单行命令，粘贴到目标 VPS 终端回车执行即可（0 交互）：\x1b[0m\n');
-    const cmd = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${coreUrl}" --token "${nodeToken}" --node-id "${matched.id}"`;
+    console.log('  探针运行状态 : ' + (isOnline ? ('\x1b[32m🟢 在线' + (isLocal ? ' (本地主节点)' : ' (' + (latency || 1) + 'ms)') + '\x1b[0m') : '\x1b[90m⚪ 离线 (未部署或未放行 ' + proxyPort + ' 端口)\x1b[0m'));
+    console.log('  公网探测地址 : \x1b[32m' + (matched.lgProxyUrl || ('http://' + (matched.endpoint || matched.id) + ':' + proxyPort)) + '\x1b[0m');
+    if (proxyToken) {
+      console.log('  安全认证 Token: \x1b[33m' + proxyToken + '\x1b[0m');
+    }
+    console.log('\n\x1b[33m👉 请直接在目标 VPS 终端执行以下单行命令，一键安装官方原生 bird-lgproxy：\x1b[0m\n');
+    const cmd = proxyToken
+      ? `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/deploy-lgproxy.sh | sudo bash -s -- 0.0.0.0:${proxyPort} "${proxyToken}"`
+      : `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/deploy-lgproxy.sh | sudo bash -s -- 0.0.0.0:${proxyPort}`;
     console.log('\x1b[1m\x1b[32m' + cmd + '\x1b[0m\n');
+    console.log('\x1b[90m💡 提示：安装后若防火墙开启，请放行 TCP ' + proxyPort + ' 端口：ufw allow ' + proxyPort + '/tcp\x1b[0m\n');
   };
 
   const targetArg = String(targetNodeArg).toLowerCase().trim();
