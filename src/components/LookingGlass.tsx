@@ -36,7 +36,7 @@ export const LookingGlass: React.FC = () => {
 
   const [selectedNodeId, setSelectedNodeId] = useState<string>(nodes[0]?.id || 'jp07');
   const [commandType, setCommandType] = useState<LgCommandType>('route');
-  const [targetInput, setTargetInput] = useState<string>('172.20.0.53');
+  const [targetInput, setTargetInput] = useState<string>('');
   const [pingCount, setPingCount] = useState<number>(4);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [historyResults, setHistoryResults] = useState<LgQueryResponse | null>(null);
