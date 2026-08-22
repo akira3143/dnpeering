@@ -146,7 +146,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=/etc/dn42-agent.env
-ExecStart=/usr/bin/python3 ${AGENT_SCRIPT} --master ${MASTER_URL} --node-id ${NODE_ID} --token ${TOKEN}
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -u ${AGENT_SCRIPT} --master ${MASTER_URL} --node-id ${NODE_ID} --token ${TOKEN}
 Restart=always
 RestartSec=3
 LimitNOFILE=65535

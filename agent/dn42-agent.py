@@ -21,6 +21,12 @@ import subprocess
 import threading
 import urllib.parse
 
+# 确保在 systemd 或非 TTY 环境下日志实时输出刷新
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(line_buffering=True)
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(line_buffering=True)
+
 AGENT_VERSION = "2.0.0"
 
 # ------------------------------------------------------------------------------
