@@ -108,62 +108,6 @@ export function initPortLedgerWithBaselineScan(targetNodeId) {
   }
 }
 
-/**
- * Triggers on-demand remote port scans on all remote PoP nodes
- * Sends authenticated POST /scan requests to all configured remote probe agents
- */
-export async function triggerAllRemoteProbesScan() {
-  try {
-    const activeCfg = getActiveConfig();
-    const nodes = activeCfg?.nodes || [];
-    const localId = getLocalNodeId();
-    const probeToken = process.env.PROBE_AUTH_TOKEN || activeCfg?.auth?.probeToken || '';
-
-    const results = [];
-
-    for (const node of nodes) {
-      const nid = String(node.id || node.code || '').toLowerCase();
-      if (!nid || nid === localId) continue;
-
-      let triggerUrl = node.probeAgentUrl;
-      if (!triggerUrl && node.lgProxyUrl) {
-        try {
-          const u = new URL(node.lgProxyUrl);
-          u.port = '5001';
-          u.pathname = '/scan';
-          triggerUrl = u.toString();
-        } catch {}
-      }
-
-      if (triggerUrl) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
-          const resp = await fetch(triggerUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${probeToken}`,
-              'Content-Type': 'application/json',
-            },
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          if (resp.ok) {
-            results.push({ nodeId: nid, code: node.code || nid.toUpperCase(), success: true });
-          } else {
-            results.push({ nodeId: nid, code: node.code || nid.toUpperCase(), success: false, reason: `HTTP ${resp.status}` });
-          }
-        } catch (err) {
-          results.push({ nodeId: nid, code: node.code || nid.toUpperCase(), success: false, reason: err.message });
-        }
-      }
-    }
-    return results;
-  } catch (err) {
-    return [];
-  }
-}
-
 // Silently perform baseline scan on initial server startup for local node
 initPortLedgerWithBaselineScan();
 
