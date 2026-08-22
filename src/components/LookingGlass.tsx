@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNetwork } from '../context/NetworkContext';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
 import { CountryFlag } from './CountryFlag';
 import {
@@ -16,7 +15,6 @@ import {
   Cpu,
   Layers,
   Globe,
-  Sparkles,
 } from 'lucide-react';
 
 export type LgCommandType = 'route' | 'ping' | 'traceroute' | 'protocols' | 'status' | 'memory';
@@ -34,7 +32,6 @@ interface LgQueryResponse {
 
 export const LookingGlass: React.FC = () => {
   const { nodes, networkMeta } = useNetwork();
-  const { user } = useAuth();
   const { showToast, copyToClipboard } = useToast();
 
   const [selectedNodeId, setSelectedNodeId] = useState<string>(nodes[0]?.id || 'jp07');
@@ -49,26 +46,6 @@ export const LookingGlass: React.FC = () => {
   const activeNode = useMemo(() => {
     return nodes.find((n) => n.id === selectedNodeId) || nodes[0];
   }, [nodes, selectedNodeId]);
-
-  // Preset target list
-  const presetTargets = useMemo(() => {
-    const list: { label: string; value: string }[] = [
-      { label: 'DN42 Anycast DNS (v4)', value: '172.20.0.53' },
-      { label: 'DN42 Anycast DNS (v6)', value: 'fd42:d42:d42:54::1' },
-    ];
-
-    if (activeNode.tunnelIpv4) {
-      list.push({ label: `${activeNode.code} 本地 IPv4`, value: activeNode.tunnelIpv4 });
-    }
-    if (activeNode.tunnelIpv6ULA) {
-      list.push({ label: `${activeNode.code} 本地 IPv6`, value: activeNode.tunnelIpv6ULA });
-    }
-
-    if (user?.cleanAsn) {
-      list.unshift({ label: `我的 ASN (AS${user.cleanAsn})`, value: `AS${user.cleanAsn}` });
-    }
-    return list;
-  }, [activeNode, user]);
 
   // Execute query handler
   const handleExecuteQuery = useCallback(async (nodeOverride?: string, typeOverride?: LgCommandType, targetOverride?: string) => {
@@ -419,27 +396,6 @@ export const LookingGlass: React.FC = () => {
                 )}
               </button>
             </div>
-
-            {/* Smart Preset Chips */}
-            {commandType !== 'status' && (
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="text-[11px] font-mono text-slate-500 flex items-center gap-1 pl-1">
-                  <Sparkles className="w-3 h-3 text-cyan-400" />
-                  <span>快捷填入:</span>
-                </span>
-                {presetTargets.map((chip, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setTargetInput(chip.value);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-black/40 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition-all cursor-pointer"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-            )}
 
           </div>
 
