@@ -48,6 +48,8 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
     peerIpv6ULA,
     peerIpv4,
     userNote,
+    bgpMode = 'mpbgp_enh',
+    mtu = 1420,
   } = data;
 
   const { session, isNew = true, diffs = [] } = sessionInfo;
@@ -117,26 +119,89 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
   }
 
   // 3. Complete Ready-to-Apply Server Configurations
+  const effectiveServerLLA = node?.tunnelIpv6LLA || 'fe80::3143';
+  const serverAddressList = [`${effectiveServerLLA}/64`];
+  if (node?.tunnelIpv6ULA) {
+    serverAddressList.push(`${node.tunnelIpv6ULA}/128`);
+  }
+  if (node?.tunnelIpv4) {
+    serverAddressList.push(`${node.tunnelIpv4}/32`);
+  }
+
+  const serverPostUpLines = [];
+  if (node?.tunnelIpv4 && peerIpv4 && String(peerIpv4).trim()) {
+    serverPostUpLines.push(`PostUp = ip addr del dev %i ${node.tunnelIpv4}/32`);
+    serverPostUpLines.push(`PostUp = ip addr add dev %i ${node.tunnelIpv4}/32 peer ${String(peerIpv4).trim()}/32`);
+  }
+  if (node?.tunnelIpv6ULA && peerIpv6ULA && String(peerIpv6ULA).trim()) {
+    serverPostUpLines.push(`PostUp = ip addr del dev %i ${node.tunnelIpv6ULA}/128`);
+    serverPostUpLines.push(`PostUp = ip addr add dev %i ${node.tunnelIpv6ULA}/128 peer ${String(peerIpv6ULA).trim()}/128`);
+  }
+
   const serverWgConfig = [
     `[Interface]`,
     `PrivateKey = <YOUR_SERVER_PRIVATE_KEY>`,
     `ListenPort = ${hostPort}`,
-    `PostUp = ip addr add ${node?.tunnelIpv6LLA || 'fe80::...'} dev %i`,
-    node?.tunnelIpv6ULA ? `PostUp = ip addr add ${node.tunnelIpv6ULA}/128 dev %i` : null,
-    node?.tunnelIpv4 ? `PostUp = ip addr add ${node.tunnelIpv4}/32 peer ${peerIpv4 || '172.20.x.x'} dev %i` : null,
+    `Address = ${serverAddressList.join(', ')}`,
+    `MTU = ${mtu || node?.mtu || 1420}`,
+    ...(serverPostUpLines.length > 0 ? serverPostUpLines : []),
     ``,
     `[Peer]`,
     `PublicKey = ${peerWgPubKey}`,
-    peerEndpoint ? `Endpoint = ${peerEndpoint}` : `# Endpoint = <Dynamic>`,
+    peerEndpoint ? `Endpoint = ${peerEndpoint}` : `# Endpoint = <Dynamic / Behind NAT>`,
     `AllowedIPs = 10.0.0.0/8, 172.20.0.0/14, 172.31.0.0/16, fd00::/8, fe80::/64`,
-  ].filter(Boolean).join('\n');
-
-  const birdConfig = [
-    `protocol bgp ${cleanTunnelName}_${nodeCleanCode} from dnpeers {`,
-    `    neighbor ${peerIpv6LLA} % '${ifaceName}' as ${cleanAsn};`,
-    `    direct;`,
-    `}`,
+    ...(peerEndpoint ? [`PersistentKeepalive = 25`] : []),
   ].join('\n');
+
+  // Bird2 Neighbor Configuration (Symmetric to client mode)
+  let birdConfig = '';
+  if (bgpMode === 'dual_stack') {
+    birdConfig = [
+      `protocol bgp dn42_${cleanTunnelName}_${nodeCleanCode}_v6 from dnpeers {`,
+      `    neighbor ${peerIpv6LLA}%${ifaceName} as ${cleanAsn};`,
+      `    ipv6 {`,
+      `        import filter dn42_import_filter;`,
+      `        export filter dn42_export_filter;`,
+      `    };`,
+      `}`,
+      ``,
+      `protocol bgp dn42_${cleanTunnelName}_${nodeCleanCode}_v4 from dnpeers {`,
+      `    neighbor ${peerIpv4 || '172.20.x.x'} as ${cleanAsn};`,
+      `    ipv4 {`,
+      `        import filter dn42_import_filter;`,
+      `        export filter dn42_export_filter;`,
+      `    };`,
+      `}`,
+    ].join('\n');
+  } else if (bgpMode === 'v6_only') {
+    birdConfig = [
+      `protocol bgp dn42_${cleanTunnelName}_${nodeCleanCode}_v6 from dnpeers {`,
+      `    neighbor ${peerIpv6LLA}%${ifaceName} as ${cleanAsn};`,
+      `    ipv6 {`,
+      `        import filter dn42_import_filter;`,
+      `        export filter dn42_export_filter;`,
+      `    };`,
+      `}`,
+    ].join('\n');
+  } else {
+    // Default MP-BGP + ENH
+    birdConfig = [
+      `protocol bgp dn42_${cleanTunnelName}_${nodeCleanCode} from dnpeers {`,
+      `    neighbor ${peerIpv6LLA}%${ifaceName} as ${cleanAsn};`,
+      ``,
+      `    ipv4 {`,
+      `        extended next hop on;`,
+      `        import filter dn42_import_filter;`,
+      `        export filter dn42_export_filter;`,
+      `    };`,
+      ``,
+      `    ipv6 {`,
+      `        import filter dn42_import_filter;`,
+      `        export filter dn42_export_filter;`,
+      `    };`,
+      `}`,
+    ].join('\n');
+  }
 
   // Assemble Complete Telegram Message
   const messageText = [
