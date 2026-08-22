@@ -260,7 +260,7 @@ function normalizeConfig(raw) {
       bgpMode: n.bgp_mode || n.bgpMode || res.network.bgpMode,
       portFormulaDisplay: n.port_formula || n.portFormulaDisplay || res.network.portFormulaDisplay,
       lookingGlassUrl: n.looking_glass_url || n.lookingGlassUrl || '',
-      dn42WhoisUrl: n.whois_url || n.dn42_whois_url || n.dn42WhoisUrl || `https://explorer.burble.com/#/AS${cleanAsn}`,
+      dn42WhoisUrl: n.whois_url || n.dn42_whois_url || n.dn42WhoisUrl || `https://git.dn42.dev/dn42/registry/src/branch/master/data/aut-num/AS${cleanAsn}`,
     };
   }
 
