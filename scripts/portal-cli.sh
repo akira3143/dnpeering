@@ -77,7 +77,6 @@ case "$1" in
           }
         } catch {}
 
-        // If empty, trigger a fast scan
         const totalEntries = Object.values(data).reduce((acc, p) => acc + Object.keys(p).length, 0);
         if (totalEntries === 0) {
           m.initPortLedgerWithBaselineScan();
@@ -89,15 +88,18 @@ case "$1" in
         console.log('');
         for (const [nodeId, ports] of Object.entries(data)) {
           console.log('\x1b[36m=== 节点: ' + nodeId.toUpperCase() + ' ===\x1b[0m');
-          const entries = Object.values(ports);
+          const entries = Object.values(ports).sort((a, b) => (Number(a.port) || 0) - (Number(b.port) || 0));
           if (entries.length === 0) {
             console.log('  (暂无端口占用记录)');
           } else {
             for (const item of entries) {
               const tag = item.type === 'locked' 
-                ? '\x1b[33m[🔒已锁定/申请中]\x1b[0m' 
-                : '\x1b[32m[🟢已使用/活跃]\x1b[0m';
-              console.log('  ' + tag + ' ' + (item.label || ('端口: ' + item.port)) + (item.asn ? ' (ASN: AS' + item.asn + ')' : ''));
+                ? '\x1b[33m[🔒 申请中]\x1b[0m' 
+                : '\x1b[32m[🟢 已占用]\x1b[0m';
+              const namePadded = String(item.name || item.label || 'service').padEnd(20, ' ');
+              const portStr = String(item.port || '').padStart(5, ' ');
+              const extra = item.asn ? ' (ASN: AS' + item.asn + ')' : '';
+              console.log('  ' + tag + ' ' + namePadded + ' : ' + portStr + extra);
             }
           }
           console.log('');
@@ -124,17 +126,17 @@ case "$1" in
     ;;
 
   scan|scan-ports)
-    echo -e "${CYAN}🔍 正在深度扫描本机已有的 WireGuard 隧道与监听端口并写入防冲突账本...${NC}"
+    echo -e "${CYAN}🔍 正在执行系统级深度扫描 (ss -tulnp) 并自动对齐防冲突账本...${NC}"
     node -e "
       import('${PORTAL_DIR}/server/sessionManager.js').then(m => {
         const res = m.initPortLedgerWithBaselineScan();
-        console.log('\x1b[32m✓ 系统深度扫描完成：已成功识别并入库 ' + res.count + ' 个存量端口到防冲突账本！\x1b[0m');
+        console.log('\x1b[32m✓ 扫描完成：当前节点 (' + (res.localId || 'JP07').toUpperCase() + ') 已精准同步 ' + res.count + ' 个存量监听端口！\x1b[0m');
       });
     "
     chown -R dnpeering:dnpeering "${PORTAL_DIR}/server/data" 2>/dev/null || true
     chmod 644 "${PORTAL_DIR}/server/data/port_ledger.json" 2>/dev/null || true
     echo ""
-    echo -e "${CYAN}📊 实时更新后的端口占用账本明细：${NC}"
+    echo -e "${CYAN}📊 整理后的端口占用账本明细（服务 + 端口）：${NC}"
     "${PORTAL_DIR}/scripts/portal-cli.sh" p
     ;;
 

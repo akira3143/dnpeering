@@ -316,6 +316,18 @@ if [ -d "/etc/wireguard" ]; then
   done
 fi
 
+if command -v ss >/dev/null 2>&1; then
+  while read -r line; do
+    port=$(echo "$line" | grep -oE ':[0-9]{5}\b' | tr -d ':' | head -n1 || true)
+    if [ -n "$port" ] && [ "$port" -ge 10000 ] && [ "$port" -le 65535 ]; then
+      if [ -z "${DETECTED_PORTS[$port]:-}" ]; then
+        pname=$(echo "$line" | grep -oE 'users:\(\("[^"]+"' | cut -d'"' -f2 || true)
+        DETECTED_PORTS["$port"]="${pname:-wireguard}"
+      fi
+    fi
+  done < <(ss -tulnp 2>/dev/null || true)
+fi
+
 # 2. 构建 JSON Payload (原生 Bash 序列化，零第三方依赖)
 PORTS_JSON="["
 FIRST=1
