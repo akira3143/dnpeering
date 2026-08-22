@@ -48,11 +48,11 @@ case "$1" in
     ;;
 
   u|update|upgrade)
-    echo -e "${CYAN}🚀 正在从 GitHub 拉取最新代码并热升级...${NC}"
+    echo -e "${CYAN}🚀 正在从 GitHub 同步最新版本并热升级...${NC}"
     cd "${PORTAL_DIR}"
-    # 丢弃代码文件的本地变动（保护 .env、portal.config.yaml 与数据文件不受影响）
-    git checkout -- . 2>/dev/null || git stash 2>/dev/null || true
-    git pull origin main
+    git fetch origin main --quiet
+    git reset --hard origin/main
+    chmod +x "${PORTAL_DIR}"/scripts/*.sh 2>/dev/null || true
     npm install --loglevel=error
     npm run build
     systemctl restart "${SERVICE_NAME}"
