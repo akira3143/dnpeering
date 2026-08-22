@@ -167,7 +167,7 @@ export async function triggerAllRemoteProbesScan() {
 // Silently perform baseline scan on initial server startup for local node
 initPortLedgerWithBaselineScan();
 
-// Periodic baseline scan every 1 hour (incremental append only: 仅限本机本地节点，绝不污染远端 PoP 节点)
+// Periodic baseline scan every 1 hour (incremental append only: 限本机本地节点，绝不污染远端 PoP 节点)
 const scanTimer = setInterval(() => {
   initPortLedgerWithBaselineScan();
 }, 60 * 60 * 1000);
@@ -215,7 +215,7 @@ function generateSessionId(nodeCode, asn) {
 function computeDiff(oldData, newData) {
   const diffs = [];
   const fields = [
-    { key: 'peerName', label: '隧道称呼 (Name)' },
+    { key: 'peerName', label: '隧道名称 (Name)' },
     { key: 'peerWgPubKey', label: 'WireGuard 公钥' },
     { key: 'peerEndpoint', label: '公网 Endpoint' },
     { key: 'peerIpv6LLA', label: 'IPv6 LLA' },

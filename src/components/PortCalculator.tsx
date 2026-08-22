@@ -39,7 +39,7 @@ export const PortCalculator: React.FC = () => {
                 <span>Deterministic Port Calculator</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
-                WireGuard 互听端口快速计算与冲突校验
+                WireGuard 监听端口计算与冲突校验
               </h2>
             </div>
 
@@ -74,7 +74,7 @@ export const PortCalculator: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 text-xs font-medium mb-1.5 font-sans pl-1.5">目标接入节点：</label>
+                    <label className="block text-slate-300 text-xs font-medium mb-1.5 font-sans pl-1.5">目标节点：</label>
                     <div className="relative">
                       <select
                         value={targetNodeId}

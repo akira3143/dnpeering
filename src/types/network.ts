@@ -51,13 +51,6 @@ export interface NetworkMeta {
   lastUpdated: string;
 }
 
-export interface BGPCommunity {
-  community: string;
-  action: string;
-  description: string;
-  category: 'export' | 'prepend' | 'local_pref' | 'filtering';
-}
-
 export interface ContactMethod {
   platform: string;
   handle: string;

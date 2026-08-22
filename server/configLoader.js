@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
     ipv6Pool: 'fd00:4242:1337::/48',
     routingPolicy: 'Open for all DN42 participants / MP-BGP (ENH) / Strict ROA Validation',
     bgpMode: 'MP-BGP + Extended Next Hop (ENH) / Dual-Stack Supported',
-    portFormulaDisplay: '20000 + (ASN % 10000) [严格限制 10000~65535，多实例自动顺延 30000/40000+ASN]',
+    portFormulaDisplay: '20000 + (ASN % 10000) [限制 10000~65535，多实例自动顺延 30000/40000+ASN]',
     lookingGlassUrl: 'https://lg.example.dn42',
     dn42WhoisUrl: 'https://explorer.burble.dn42/services/whois/?search=AS4242421337',
     topologyUrl: 'https://topo.example.dn42',

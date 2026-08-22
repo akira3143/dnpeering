@@ -58,7 +58,7 @@ export const Footer: React.FC = () => {
               <span className="font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono text-[11px] text-cyan-400">
                 联络渠道与即时响应 (Contact Matrix)
               </span>
-              <span className="text-slate-500 font-mono text-[11px]">响应时效: &lt; 2小时</span>
+              <span className="text-slate-500 font-mono text-[11px]">响应时效: &lt; 24小时</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

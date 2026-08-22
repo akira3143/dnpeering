@@ -217,7 +217,6 @@ export const LookingGlass: React.FC = () => {
 
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-black/40 px-3.5 py-2 rounded-xl border border-white/10 shrink-0">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>核心 RR 协议中枢：</span>
             <span className="text-cyan-300 font-semibold">{networkMeta.asn}</span>
           </div>
         </div>
@@ -360,7 +359,7 @@ export const LookingGlass: React.FC = () => {
                       : commandType === 'protocols'
                       ? '输入协议名 (如 dn42_akilab_jp7，留空查询全部会话)'
                       : commandType === 'status'
-                      ? '（无需指定目标，直接运行即可）'
+                      ? '（无需指定目标，直接运行）'
                       : '输入目标 IP 地址或域名 (如 172.20.0.53, fd42:d42:d42:54::1)'
                   }
                   disabled={commandType === 'status'}
@@ -489,10 +488,10 @@ export const LookingGlass: React.FC = () => {
                 <Terminal className="w-8 h-8 text-slate-600" />
                 <div className="text-center space-y-1">
                   <p className="text-xs font-mono text-slate-400">
-                    控制台就绪 · 点击上方的「执行诊断」或快捷芯片开始探测
+                    控制台就绪 · 点击上方的「执行诊断」开始探测
                   </p>
                   <p className="text-[11px] font-mono text-slate-600">
-                    支持 IPv4/IPv6 前缀、BGP 团体属性、链路延迟与逐跳跃点实时解析
+                    支持 IPv4/IPv6 前缀、链路延迟与逐跳跃点实时解析
                   </p>
                 </div>
               </div>

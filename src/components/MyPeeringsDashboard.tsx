@@ -135,7 +135,7 @@ export const MyPeeringsDashboard: React.FC = () => {
 
       await refreshSessions();
       setSessionToDelete(null);
-      showToast('🗑️ 会话已成功撤销，服务器端口已释放归还！', 'success');
+      showToast('🗑️ 会话已成功撤销，服务器端口已释放！', 'success');
     } catch {
       showToast('网络请求异常，请稍后重试', 'error');
     } finally {
@@ -186,12 +186,12 @@ export const MyPeeringsDashboard: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white font-sans">
-                  {user?.isAdmin ? '全网对等互联中枢管控看板' : '我的对等互联看板'}
+                  {user?.isAdmin ? '对等互联中枢管控看板' : '我的对等互联看板'}
                 </h2>
                 {user?.isAdmin ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-950/80 to-pink-950/80 border border-purple-500/50 text-[10px] font-mono text-purple-300 font-bold shadow-md shadow-purple-950/50">
                     <Zap className="w-3 h-3 text-purple-400" />
-                    <span>👑 最高管理员 ({user.username || 'akira'})</span>
+                    <span>👑 管理员 ({user.username || 'akira'})</span>
                   </span>
                 ) : isAuthenticated ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] font-mono text-emerald-400">
@@ -205,7 +205,7 @@ export const MyPeeringsDashboard: React.FC = () => {
                 )}
               </div>
               <p className="text-xs text-slate-400 font-mono">
-                {user ? `${user.asName || 'DN42 Member'} · Maintainer: ${user.maintainer || 'N/A'}` : '管理你的全部 Peering 会话与实时 BGP 路由收敛状态'}
+                {user ? `${user.asName || 'DN42 Member'} · Maintainer: ${user.maintainer || 'N/A'}` : '管理你的 Peering 会话与实时 BGP 路由收敛状态'}
               </p>
             </div>
           </div>
@@ -446,7 +446,7 @@ export const MyPeeringsDashboard: React.FC = () => {
                         <button
                           onClick={() => setSessionToDelete(session)}
                           className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
-                          title="撤销并删除该互联会话 (释放端口)"
+                          title="删除该互联会话"
                         >
                           <Trash2 className="w-3 h-3" />
                           <span>撤销删除</span>
@@ -550,7 +550,7 @@ export const MyPeeringsDashboard: React.FC = () => {
               <div className="flex items-center justify-between border-b border-red-500/20 pb-3">
                 <div className="flex items-center gap-2 font-bold text-sm text-red-300">
                   <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span>确认撤销并删除互联会话？</span>
+                  <span>确认删除互联会话？</span>
                 </div>
                 <button
                   type="button"
@@ -577,7 +577,7 @@ export const MyPeeringsDashboard: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-red-950/30 border border-red-500/20 text-xs text-red-300/90 leading-relaxed">
-                ⚠️ <b>操作警告：</b> 撤销后，该对等互联申请将从系统注销，为你预留的 AkiLab 服务端端口 <b>{sessionToDelete.hostPort}</b> 将被立即释放归还公用端口池。
+                ⚠️ <b>操作警告：</b> 撤销后，该对等互联申请将从系统注销，为你预留的 AkiLab 服务端端口 <b>{sessionToDelete.hostPort}</b> 将被立即释放。
               </div>
 
               <div className="flex items-center gap-2 pt-1">
@@ -592,7 +592,7 @@ export const MyPeeringsDashboard: React.FC = () => {
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      <span>确认撤销与删除</span>
+                      <span>确认删除</span>
                     </>
                   )}
                 </button>

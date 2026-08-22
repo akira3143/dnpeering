@@ -85,7 +85,7 @@ export const AuthModal: React.FC = () => {
   const handlePasswordLogin = async () => {
     const userInput = asnInput.trim();
     if (!userInput) {
-      showToast('请输入有效的 ASN 号码或管理员账号', 'error');
+      showToast('请输入有效的 ASN 号码', 'error');
       return;
     }
     if (!passwordInput) {
@@ -112,7 +112,7 @@ export const AuthModal: React.FC = () => {
       setIsDashboardOpen(true);
       showToast(
         data.user.isAdmin
-          ? `👑 欢迎管理员 ${data.user.username || data.user.asn}，已授予全站最高管理权限！`
+          ? `👑 欢迎管理员 ${data.user.username || data.user.asn}，已授予管理权限！`
           : `🎉 欢迎回来，${data.user.asn} (${data.user.maintainer || data.user.asName})`,
         'success'
       );
@@ -184,7 +184,7 @@ export const AuthModal: React.FC = () => {
 
       // Transition to Set Password step
       setStep('set_password');
-      showToast('🎉 签名确权通过！你可以设定或重置日常登录密码', 'success');
+      showToast('🎉 签名确权通过！你可以设定或重置登录密码', 'success');
     } catch {
       showToast('验签请求异常，请稍后重试', 'error');
     } finally {
@@ -227,9 +227,9 @@ export const AuthModal: React.FC = () => {
       loginWithToken(tempAuthResult.token, tempAuthResult.user, rememberMe);
       handleClose();
       setIsDashboardOpen(true);
-      showToast('🎉 密码已成功保存！下次可直接使用 ASN + 密码秒级登入', 'success');
+      showToast('🎉 密码已成功保存！可直接使用 ASN + 密码登入', 'success');
     } catch {
-      showToast('设密请求异常，请稍后重试', 'error');
+      showToast('请求异常，请稍后重试', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -425,7 +425,7 @@ export const AuthModal: React.FC = () => {
                     <span>密码学所有权认证</span>
                   </div>
                   <p className="text-slate-400">
-                    自动从 DN42 Registry 读取 Maintainer 登记公钥并生成考题，完成签名即可设密或重置。
+                    自动从 DN42 读取 Maintainer 登记公钥并生成考题，完成签名即可设密或重置。
                   </p>
                 </div>
               </div>
@@ -557,7 +557,7 @@ export const AuthModal: React.FC = () => {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px] text-slate-300 font-medium px-1.5">
-                    <span>1. 在终端运行签名命令:</span>
+                    <span>1. 在终端运行命令:</span>
                     <div className="flex items-center gap-1 bg-white/[0.04] p-0.5 rounded-lg border border-white/10 text-[10px] self-start sm:self-auto">
                       <button
                         type="button"
@@ -617,7 +617,7 @@ export const AuthModal: React.FC = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>正在校验密码学签名...</span>
+                      <span>正在校验签名...</span>
                     </>
                   ) : (
                     <>

@@ -103,7 +103,7 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
     headerLines.push(`⚡ <b>IPv4 隧道:</b> <code>${escapeHtml(String(peerIpv4).trim())}</code>`);
   }
 
-  if (userNote && userNote !== '你好！我在 DN42 上看到了你的节点，希望能建立 BGP 对等互联。期待你的回复！' && userNote !== '你好！我在 DN42 上看到了 AkiLab 的节点，希望能建立 BGP 对等互联。期待你的回复！') {
+  if (userNote && userNote !== '你好！我希望能与你建立 BGP 对等互联。期待你的回复！' && userNote !== '你好！我在 DN42 上看到了 AkiLab 的节点，希望能建立 BGP 对等互联。期待你的回复！') {
     headerLines.push(`💬 <b>留言:</b> <i>${escapeHtml(userNote)}</i>`);
   }
 
@@ -208,7 +208,6 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
     headerLines.join('\n'),
     ``,
     `━━━━━━━━━━━━━━━━━━━━`,
-    `🚀 <b>【服务端一键部署配置】</b>`,
     `⚙️ <b>WireGuard (/etc/wireguard/${escapeHtml(ifaceName)}.conf):</b>`,
     `<pre><code>${escapeHtml(serverWgConfig)}</code></pre>`,
     `🦅 <b>Bird2 BGP Neighbor 配置:</b>`,
@@ -263,14 +262,14 @@ export async function sendDeleteNotification(session) {
 
   const cleanAsn = String(session.asn || '').replace(/^AS/i, '').trim();
   const messageText = [
-    `🗑️ <b>[互联会话撤销通知]</b>`,
+    `🗑️ <b>[会话撤销通知]</b>`,
     `━━━━━━━━━━━━━━━━━━━━`,
     `👤 <b>Peer ASN:</b> AS${escapeHtml(cleanAsn)}`,
     `🌐 <b>互联节点:</b> ${escapeHtml(session.nodeName || session.nodeCode || session.nodeId)}`,
     `🎫 <b>会话编号:</b> <code>${escapeHtml(session.id)}</code> (v${session.version || 1})`,
     `🔌 <b>释放端口:</b> AkiLab <code>${escapeHtml(session.hostPort)}</code> / 本地 <code>${escapeHtml(session.clientPort || 'N/A')}</code>`,
     `🕒 <b>撤销时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })} (UTC+8)`,
-    `ℹ️ <i>该互联会话已注销，对应的服务器端口已完成解绑释放。</i>`,
+    `ℹ️ <i>该会话已注销，端口已释放。</i>`,
   ].join('\n');
 
   try {

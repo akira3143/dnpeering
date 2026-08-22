@@ -82,7 +82,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
     return {
       success: false,
       isLive: false,
-      output: `❌ 错误：不支持的诊断指令类型 "${commandType}"。`,
+      output: `❌ 错误：不支持的指令类型 "${commandType}"。`,
       durationMs: Date.now() - startTime,
       command: `${commandType} ${cleanTarget}`,
       error: 'Invalid command type',
@@ -112,7 +112,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
         return {
           success: false,
           isLive: false,
-          output: '❌ 错误：Ping 指令必须指定目标 IP 地址或主机名。',
+          output: '❌ 错误：Ping 必须指定目标 IP 地址或主机名。',
           durationMs: 0,
           command: 'ping',
           error: 'Missing target',
@@ -161,7 +161,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
         return {
           success: false,
           isLive: false,
-          output: '❌ 错误：Traceroute 指令必须指定目标 IP 地址或主机名。',
+          output: '❌ 错误：Traceroute 必须指定目标 IP 地址或主机名。',
           durationMs: 0,
           command: 'traceroute',
           error: 'Missing target',
@@ -241,7 +241,7 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
     isMock: false,
     nodeId: cleanNode,
     command: birdCommand,
-    output: `❌ 节点探针离线或不可达 [${cleanNode.toUpperCase()}]\n${fetchError}\n\n💡 提示：该节点 (${cleanNode}) 尚未部署 bird-lgproxy 探针，或防火墙未放行端口。`,
+    output: `❌ 探针离线或不可达 [${cleanNode.toUpperCase()}]\n${fetchError}\n\n💡 提示：该节点 (${cleanNode}) 尚未部署 bird-lgproxy 探针，或防火墙未放行端口。`,
     durationMs: Date.now() - startTime,
     error: fetchError,
   };
@@ -355,7 +355,7 @@ export async function queryPeerBgpStatus(asn, nodeId = 'jp07', peerName = '') {
   let routesImported = 0;
   let routesExported = 0;
   let uptime = 'N/A';
-  let diagnosticTips = '管理员通常在数小时内审核并在服务端部署 WireGuard 隧道与 BIRD BGP 会话。';
+  let diagnosticTips = '将在 24 小时内审核并部署您的会话。';
   let isLive = false;
 
   // Execute protocol query through looking glass engine
@@ -389,7 +389,7 @@ export async function queryPeerBgpStatus(asn, nodeId = 'jp07', peerName = '') {
       if (/Established/i.test(peerSection)) {
         stage = 4;
         bgpState = 'Established';
-        stageLabel = '🟢 BGP 路由已完全建立 (Established)';
+        stageLabel = '🟢 BGP 路由已建立 (Established)';
         
         // Parse routes count: "Routes: 12 imported, 18 exported"
         const routesMatch = peerSection.match(/Routes:\s*(\d+)\s*imported,\s*(\d+)\s*exported/i);
@@ -402,7 +402,7 @@ export async function queryPeerBgpStatus(asn, nodeId = 'jp07', peerName = '') {
         }
 
         uptime = '在线 (Active)';
-        diagnosticTips = '恭喜！BGP 会话已处于 Established 状态，双向路由正常收发。';
+        diagnosticTips = '恭喜！BGP 会话已处于 Established 状态。';
       } else if (/OpenSent|OpenConfirm|Connect|Active/i.test(peerSection)) {
         stage = 3;
         bgpState = 'Active / Handshaking';
@@ -412,7 +412,7 @@ export async function queryPeerBgpStatus(asn, nodeId = 'jp07', peerName = '') {
         stage = 2;
         bgpState = 'Down / Idle';
         stageLabel = '⏳ 节点已配置 · 等待对端发起握手';
-        diagnosticTips = '服务端已完成 WireGuard 与 BIRD 部署。请在你的服务器执行 wg-quick up 启动隧道。';
+        diagnosticTips = '服务端已完成 WireGuard 与 BIRD 部署。请在您的服务器执行 wg-quick up 启动隧道。';
       }
     }
   } catch {

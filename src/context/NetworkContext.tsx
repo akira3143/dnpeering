@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { NetworkMeta, NodeInfo, ContactMethod, BGPCommunity } from '../types/network';
+import type { NetworkMeta, NodeInfo, ContactMethod } from '../types/network';
 import {
   NETWORK_META as DEFAULT_META,
   NETWORK_NODES as DEFAULT_NODES,
   CONTACT_METHODS as DEFAULT_CONTACTS,
-  BGP_COMMUNITIES as DEFAULT_COMMUNITIES,
   MIN_DN42_PORT,
   MAX_DN42_PORT,
   type PortResolutionResult,
@@ -14,7 +13,6 @@ interface NetworkContextType {
   networkMeta: NetworkMeta;
   nodes: NodeInfo[];
   contacts: ContactMethod[];
-  communities: BGPCommunity[];
   isLoading: boolean;
   refetchNetworkMeta: () => Promise<void>;
   resolveHostPort: (asnInput: string | number, nodeId?: string, customPort?: number | string) => PortResolutionResult;
@@ -27,7 +25,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [networkMeta, setNetworkMeta] = useState<NetworkMeta>(DEFAULT_META);
   const [nodes, setNodes] = useState<NodeInfo[]>(DEFAULT_NODES);
   const [contacts, setContacts] = useState<ContactMethod[]>(DEFAULT_CONTACTS);
-  const [communities, setCommunities] = useState<BGPCommunity[]>(DEFAULT_COMMUNITIES);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchMeta = useCallback(async () => {
@@ -39,7 +36,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           if (data.network) setNetworkMeta((prev) => ({ ...prev, ...data.network }));
           if (Array.isArray(data.nodes) && data.nodes.length > 0) setNodes(data.nodes);
           if (Array.isArray(data.contacts) && data.contacts.length > 0) setContacts(data.contacts);
-          if (Array.isArray(data.communities) && data.communities.length > 0) setCommunities(data.communities);
         }
       }
     } catch {
@@ -185,7 +181,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         networkMeta,
         nodes,
         contacts,
-        communities,
         isLoading,
         refetchNetworkMeta: fetchMeta,
         resolveHostPort,

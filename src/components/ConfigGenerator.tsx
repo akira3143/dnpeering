@@ -277,8 +277,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
   };
 
   const handleResetNote = () => {
-    setUserNote('你好！我在 DN42 上看到了你的节点，希望能建立 BGP 对等互联。期待你的回复！');
-    showToast('附加留言已恢复默认内容', 'info');
+    setUserNote('你好！我希望能与你建立 BGP 对等互联。期待你的回复！');
+    showToast('已恢复默认', 'info');
   };
 
   // Cooldown & Submitting State
@@ -320,7 +320,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
 
     // Validate inputs
     if (!peerAsn || !cleanAsn) {
-      showToast('请先填写你的 DN42 ASN', 'error');
+      showToast('请填写你的 DN42 ASN', 'error');
       return;
     }
     if (asnValidation.status === 'error') {
@@ -493,7 +493,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                 </span>
               </div>
               <p className="text-[11px] font-mono text-slate-400 tracking-wider truncate">
-                PARAMETERS SETUP &middot; 实时参数校验与端口联动
+                PARAMETERS SETUP &middot; 实时校验与端口联动
               </p>
             </div>
           </div>
@@ -527,7 +527,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                 </span>
               </div>
               <p className="text-[11px] font-mono text-slate-400 tracking-wider truncate">
-                LIVE CONFIG ENGINE &middot; 实时生成客户端配置与一键投递
+                LIVE CONFIG ENGINE &middot; 客户端配置示例与一键投递
               </p>
             </div>
           </div>
@@ -554,7 +554,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                     onClick={handleFillDemoData}
                     type="button"
                     className="px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-sans flex items-center gap-1 transition-all cursor-pointer font-medium"
-                    title="一键填入测试示例数据"
+                    title="填入测试示例数据"
                   >
                     <Zap className="w-3 h-3 text-cyan-400" />
                     <span>示例</span>
@@ -649,7 +649,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                               ? 'text-red-300 bg-red-950/80 border-red-500/50 hover:bg-red-900/80'
                               : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/30 hover:bg-cyan-900/60'
                           }`}
-                          title="点击查看端口计算规则、冲突检测与自定义端口"
+                          title="查看端口计算规则、冲突检测与自定义端口"
                         >
                           <span>{hostPortInfo.isFallback ? `⚡ 备用端口: ${finalHostPort}` : `端口: ${finalHostPort}`}</span>
                           <Settings2 className="w-2.5 h-2.5 opacity-70" />
@@ -694,8 +694,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                     {/* Peer Name / Identifier */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between px-1.5">
-                        <label className="text-slate-300 font-medium">隧道称呼 (Name)</label>
-                        <span className="text-[10px] font-mono text-slate-400">英数最长12位</span>
+                        <label className="text-slate-300 font-medium">隧道名称 (Name)</label>
+                        <span className="text-[10px] font-mono text-slate-400"></span>
                       </div>
                       <div className="flex items-center w-full rounded-xl bg-[#040813] border border-white/15 focus-within:border-cyan-400 transition-colors overflow-hidden shadow-inner">
                         <input
@@ -773,8 +773,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                       {/* Client Fallback Port Toggle */}
                       <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                         <div className="text-[11px]">
-                          <div className="text-slate-200 font-medium">你本地 VPS 监听端口: <span className="font-mono text-purple-300">{finalClientPort}</span></div>
-                          <div className="text-[10px] text-slate-400">同 VPS 连接多个节点时可开启备用端口</div>
+                          <div className="text-slate-200 font-medium">你的监听端口: <span className="font-mono text-purple-300">{finalClientPort}</span></div>
+                          <div className="text-[10px] text-slate-400">连接多个节点时可开启备用端口</div>
                         </div>
                         <label className="flex items-center gap-1.5 cursor-pointer text-xs font-mono text-slate-300 select-none">
                           <input
@@ -793,7 +793,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                 {/* 3. WireGuard Endpoint */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between px-1.5">
-                    <label className="text-slate-300 font-medium">你的 WireGuard 公网 Endpoint</label>
+                    <label className="text-slate-300 font-medium">WireGuard 公网 Endpoint</label>
                     <span className="text-[10px] font-mono text-slate-400">(可选, 动态 IP 可留空)</span>
                   </div>
                   
@@ -819,7 +819,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
 
                 {/* 4. Peer WG Public Key */}
                 <div className="space-y-1.5">
-                  <label className="block text-slate-300 font-medium pl-1.5">你的 WireGuard 公钥 (Public Key)</label>
+                  <label className="block text-slate-300 font-medium pl-1.5">WireGuard 公钥 (Public Key)</label>
                   <input
                     type="text"
                     value={peerWgPubKey}
@@ -935,10 +935,10 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                         onChange={(e) => setMtu(parseInt(e.target.value, 10))}
                         className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-[#040813] border border-white/15 text-slate-100 text-xs font-mono focus:border-cyan-400 focus:outline-none transition-colors cursor-pointer appearance-none shadow-inner"
                       >
-                        <option value={1420} className="bg-[#0c1424] text-slate-100 py-2">1420 (标准推荐)</option>
+                        <option value={1420} className="bg-[#0c1424] text-slate-100 py-2">1420 (推荐)</option>
                         <option value={1408} className="bg-[#0c1424] text-slate-100 py-2">1408 (PPPoE/嵌套隧道)</option>
                         <option value={1370} className="bg-[#0c1424] text-slate-100 py-2">1370 (多层封装)</option>
-                        <option value={1280} className="bg-[#0c1424] text-slate-100 py-2">1280 (IPv6 最小 MTU)</option>
+                        <option value={1280} className="bg-[#0c1424] text-slate-100 py-2">1280 (最小 MTU)</option>
                       </select>
                       <ChevronDown className="w-4 h-4 text-slate-400 pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2" />
                     </div>
@@ -1036,7 +1036,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                         </span>
                       </div>
                       <span className="text-slate-500 font-mono text-[11px]">
-                        纯文本申请信
+                        申请模板
                       </span>
                     </div>
 
@@ -1054,7 +1054,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                         placeholder="附加留言 (如期望互联方式、路由偏好)..."
                         className="flex-1 px-2.5 py-1.5 rounded-lg bg-black/60 border border-white/10 text-slate-200 text-xs font-sans focus:border-purple-400 focus:outline-none"
                       />
-                      {userNote !== '你好！我在 DN42 上看到了你的节点，希望能建立 BGP 对等互联。期待你的回复！' && (
+                      {userNote !== '你好！我希望能与你建立 BGP 对等互联。期待你的回复！' && (
                         <button
                           onClick={handleResetNote}
                           type="button"
@@ -1085,8 +1085,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span className="truncate">
                     {activeTab === 'markdown'
-                      ? '申请信已整合安全参数与附加留言，点击右侧按钮直接一键提交。'
-                      : '配置代码已严格根据参数实时渲染，点击右侧按钮直接一键投递。'}
+                      ? '申请信息已整合，点击右侧按钮直接一键提交。'
+                      : '配置代码已实时渲染，点击右侧按钮直接一键投递。'}
                   </span>
                 </div>
               )}

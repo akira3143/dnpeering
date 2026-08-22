@@ -134,7 +134,7 @@ export const Navbar: React.FC = () => {
                   ? 'bg-purple-950/40 hover:bg-purple-900/50 border-purple-500/40 text-purple-300 shadow-purple-950/50'
                   : 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-500/40 text-emerald-300'
               }`}
-              title={user?.isAdmin ? '最高管理员 (Root Ops)' : '已通过 DN42 Registry 验真'}
+              title={user?.isAdmin ? '管理员 (Root Ops)' : '已通过 DN42 Registry 验真'}
             >
               <ShieldCheck className={`w-3.5 h-3.5 ${user?.isAdmin ? 'text-purple-400' : 'text-emerald-400'}`} />
               <span>{user?.isAdmin ? (user.username || 'akira') : user?.asn}</span>

@@ -24,7 +24,7 @@ export const HeroTelemetry: React.FC = () => {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white font-sans leading-tight">
             AkiLab Networks <br className="hidden sm:inline" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400">
-              个人路由实验网络 & 互联门户
+              个人路由实验网络
             </span>
           </h1>
 

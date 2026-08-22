@@ -97,7 +97,7 @@ export async function createAuthChallenge(asn) {
 
   const identity = await getAsnIdentity(cleanAsn);
   if (!identity || !identity.valid) {
-    return { success: false, error: `未能从 DN42 Registry 查询到 AS${cleanAsn}` };
+    return { success: false, error: `未查询到 AS${cleanAsn}` };
   }
 
   const nonce = crypto.randomBytes(8).toString('hex');
@@ -167,7 +167,7 @@ export async function verifySshSignature(asn, rawSig, rememberMe = false) {
   if (sshKeys.length === 0) {
     return {
       success: false,
-      error: `该 ASN (${identity.maintainer || cleanAsn}) 在 DN42 Registry 中尚未登记 SSH 公钥 (auth: ssh-...)。`,
+      error: `该 ASN (${identity.maintainer || cleanAsn}) 在 DN42 中尚未登记 SSH 公钥 (auth: ssh-...)。`,
     };
   }
 
@@ -216,7 +216,7 @@ export async function verifySshSignature(asn, rawSig, rememberMe = false) {
     if (!verifySuccess) {
       return {
         success: false,
-        error: 'SSH 签名校验失败。请确认使用的是在 DN42 Registry 登记的对应 SSH 私钥。',
+        error: 'SSH 校验失败。请确认使用的是在 DN42 登记的对应 SSH 私钥。',
       };
     }
 
@@ -337,7 +337,7 @@ export async function setPasswordForAsn(asn, newPassword) {
 
   return {
     success: true,
-    message: '密码设置成功，后续可直接使用 ASN + 密码快速登入！',
+    message: '密码设置成功，可使用 ASN + 密码快速登入！',
   };
 }
 
@@ -375,7 +375,7 @@ export async function verifyPasswordLogin(userInput, password, rememberMe = fals
     const plainAdminPwd = (process.env.ADMIN_PASSWORD || '').trim();
 
     if (!adminHash && !plainAdminPwd) {
-      return { success: false, error: '管理员账户未配置（请在 .env 中设置 ADMIN_PASSWORD 或 ADMIN_PASSWORD_HASH/SALT）' };
+      return { success: false, error: '账户未配置' };
     }
 
     let isValid = false;
@@ -391,7 +391,7 @@ export async function verifyPasswordLogin(userInput, password, rememberMe = fals
     }
 
     if (!isValid) {
-      return { success: false, error: '管理员密码错误，请核对后重试。' };
+      return { success: false, error: '密码错误，请核对后重试。' };
     }
 
     const ttlSeconds = rememberMe ? 48 * 3600 : 40 * 60;

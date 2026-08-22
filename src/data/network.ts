@@ -1,4 +1,4 @@
-import type { NetworkMeta, NodeInfo, BGPCommunity, ContactMethod } from '../types/network';
+import type { NetworkMeta, NodeInfo, ContactMethod } from '../types/network';
 
 /**
  * 自治系统 (AS) 核心元数据配置 (示例模板)
@@ -258,24 +258,6 @@ export const NETWORK_NODES: NodeInfo[] = [
 export const BACKBONE_LINKS: [string, string][] = [
   ['jp07', 'us01'],
   ['jp07', 'de02'],
-];
-
-/**
- * BGP 团体属性
- */
-export const BGP_COMMUNITIES: BGPCommunity[] = [
-  {
-    community: '64511:21',
-    action: 'NO_EXPORT_UPSTREAM',
-    description: '不向任何上游 (Upstream) Transit 提供商转发该前缀',
-    category: 'export',
-  },
-  {
-    community: '64511:22',
-    action: 'NO_EXPORT_PEERS',
-    description: '仅保留在本地 AS 内部，不向任何外部 BGP Peers 广播',
-    category: 'export',
-  },
 ];
 
 /**

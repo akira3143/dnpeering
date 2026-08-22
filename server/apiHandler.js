@@ -115,7 +115,7 @@ export async function handlePeeringSubmission(body, clientIp, authHeader) {
       status: 500,
       data: {
         success: false,
-        error: botResult.error || '推送通知到管理员 Telegram 失败，请稍后重试',
+        error: botResult.error || '推送失败，请稍后重试',
       },
     };
   }
@@ -128,8 +128,8 @@ export async function handlePeeringSubmission(body, clientIp, authHeader) {
     data: {
       success: true,
       message: isNew
-        ? '🎉 对等互联申请已成功投递至 AkiLab 管理员！'
-        : `🔄 对等互联申请已更新至版本 v${session.version}，变更已实时同步给管理员！`,
+        ? '🎉 对等互联申请已成功投递'
+        : `🔄 对等互联申请已更新至版本 v${session.version}，变更已实时同步`,
       sessionId: session.id,
       version: session.version,
       isNew,
@@ -394,7 +394,7 @@ export async function handleDeleteSession(body, authHeader) {
     status: 200,
     data: {
       success: true,
-      message: `互联会话 ${sessionId} 已成功撤销，服务器端口 ${result.session.hostPort} 已释放。`,
+      message: `会话 ${sessionId} 已成功撤销，服务器端口 ${result.session.hostPort} 已释放。`,
       sessionId,
     },
   };
