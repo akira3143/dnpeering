@@ -144,10 +144,10 @@ export async function sendPeeringNotification(data, sessionInfo = {}) {
     ``,
     `━━━━━━━━━━━━━━━━━━━━`,
     `🚀 <b>【服务端一键部署配置】</b>`,
-    `⚙️ <b>WireGuard (/etc/wireguard/${ifaceName}.conf):</b>`,
-    `<pre><code>${serverWgConfig}</code></pre>`,
+    `⚙️ <b>WireGuard (/etc/wireguard/${escapeHtml(ifaceName)}.conf):</b>`,
+    `<pre><code>${escapeHtml(serverWgConfig)}</code></pre>`,
     `🦅 <b>Bird2 BGP Neighbor 配置:</b>`,
-    `<pre><code>${birdConfig}</code></pre>`,
+    `<pre><code>${escapeHtml(birdConfig)}</code></pre>`,
   ].join('\n');
 
   try {
