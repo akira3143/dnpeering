@@ -19,39 +19,51 @@ if (!fs.existsSync(DATA_DIR)) {
  * Baseline scan executed ONCE on server startup
  * Silently imports pre-existing WireGuard ports into port_ledger.json without overwriting
  */
-export function initPortLedgerWithBaselineScan(defaultNodeId) {
+export function initPortLedgerWithBaselineScan(targetNodeId) {
   try {
     const activeCfg = getActiveConfig();
-    const primaryNodeId = defaultNodeId || activeCfg?.nodes?.[0]?.id || 'jp07';
     const portLedger = loadJson(PORT_LEDGER_FILE, {});
-    if (!portLedger[primaryNodeId]) {
-      portLedger[primaryNodeId] = {};
-    }
-
+    const nodes = (activeCfg?.nodes && activeCfg.nodes.length > 0) ? activeCfg.nodes : [{ id: 'jp07' }];
+    
     const baselinePorts = scanBaselineExistingPorts();
-    let updated = false;
+    if (baselinePorts.length === 0) return { updated: false, count: 0, items: [] };
 
-    for (const item of baselinePorts) {
-      const portKey = String(item.port);
-      if (!portLedger[primaryNodeId][portKey]) {
-        portLedger[primaryNodeId][portKey] = {
-          label: item.label,
-          port: item.port,
-          type: 'in_use',
-          status: 'existing',
-          name: item.name,
-          source: item.source,
-          scannedAt: new Date().toISOString(),
-        };
-        updated = true;
+    let totalUpdated = 0;
+    
+    // Determine target node IDs from config (e.g. jp07, jp7, etc.)
+    const targetNodeIds = targetNodeId 
+      ? [String(targetNodeId).toLowerCase()] 
+      : nodes.map(n => String(n.id || n.code || 'jp07').toLowerCase());
+
+    for (const nodeId of targetNodeIds) {
+      if (!portLedger[nodeId]) {
+        portLedger[nodeId] = {};
+      }
+
+      for (const item of baselinePorts) {
+        const portKey = String(item.port);
+        if (!portLedger[nodeId][portKey]) {
+          portLedger[nodeId][portKey] = {
+            label: item.label,
+            port: item.port,
+            type: 'in_use',
+            status: 'existing',
+            name: item.name,
+            source: item.source,
+            scannedAt: new Date().toISOString(),
+          };
+          totalUpdated++;
+        }
       }
     }
 
-    if (updated) {
+    if (totalUpdated > 0) {
       saveJson(PORT_LEDGER_FILE, portLedger);
     }
+    return { updated: totalUpdated > 0, count: baselinePorts.length, items: baselinePorts };
   } catch (err) {
     console.error('Error during baseline port scan:', err);
+    return { updated: false, count: 0, items: [] };
   }
 }
 

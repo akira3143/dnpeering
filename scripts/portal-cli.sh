@@ -66,11 +66,26 @@ case "$1" in
 
   p|port|ports)
     echo -e "${CYAN}📊 正在读取当前端口占用与锁定账本 (${PORTAL_DIR}/server/data/port_ledger.json)...${NC}"
-    if [ -f "${PORTAL_DIR}/server/data/port_ledger.json" ]; then
-      node -e "
+    node -e "
+      import('${PORTAL_DIR}/server/sessionManager.js').then(m => {
         const fs = require('fs');
         const file = '${PORTAL_DIR}/server/data/port_ledger.json';
-        const data = JSON.parse(fs.readFileSync(file, 'utf-8') || '{}');
+        let data = {};
+        try {
+          if (fs.existsSync(file)) {
+            data = JSON.parse(fs.readFileSync(file, 'utf-8') || '{}');
+          }
+        } catch {}
+
+        // If empty, trigger a fast scan
+        const totalEntries = Object.values(data).reduce((acc, p) => acc + Object.keys(p).length, 0);
+        if (totalEntries === 0) {
+          m.initPortLedgerWithBaselineScan();
+          try {
+            data = JSON.parse(fs.readFileSync(file, 'utf-8') || '{}');
+          } catch {}
+        }
+
         console.log('');
         for (const [nodeId, ports] of Object.entries(data)) {
           console.log('\x1b[36m=== 节点: ' + nodeId.toUpperCase() + ' ===\x1b[0m');
@@ -82,15 +97,13 @@ case "$1" in
               const tag = item.type === 'locked' 
                 ? '\x1b[33m[🔒已锁定/申请中]\x1b[0m' 
                 : '\x1b[32m[🟢已使用/活跃]\x1b[0m';
-              console.log('  ' + tag + ' ' + item.label + (item.asn ? ' (ASN: AS' + item.asn + ')' : ''));
+              console.log('  ' + tag + ' ' + (item.label || ('端口: ' + item.port)) + (item.asn ? ' (ASN: AS' + item.asn + ')' : ''));
             }
           }
           console.log('');
         }
-      " 2>/dev/null || cat "${PORTAL_DIR}/server/data/port_ledger.json"
-    else
-      echo -e "${YELLOW}暂无端口账本文件。${NC}"
-    fi
+      });
+    "
     ;;
 
   clean|cleanup)
@@ -111,26 +124,18 @@ case "$1" in
     ;;
 
   scan|scan-ports)
-    echo -e "${CYAN}🔍 正在深度扫描本机已有的 WireGuard 隧道与监听端口...${NC}"
+    echo -e "${CYAN}🔍 正在深度扫描本机已有的 WireGuard 隧道与监听端口并写入防冲突账本...${NC}"
+    node -e "
+      import('${PORTAL_DIR}/server/sessionManager.js').then(m => {
+        const res = m.initPortLedgerWithBaselineScan();
+        console.log('\x1b[32m✓ 系统深度扫描完成：已成功识别并入库 ' + res.count + ' 个存量端口到防冲突账本！\x1b[0m');
+      });
+    "
+    chown -R dnpeering:dnpeering "${PORTAL_DIR}/server/data" 2>/dev/null || true
+    chmod 644 "${PORTAL_DIR}/server/data/port_ledger.json" 2>/dev/null || true
     echo ""
-    echo -e "  ${YELLOW}--- 1. Linux 内核实时 WireGuard 网卡监听端口 (wg show) ---${NC}"
-    if command -v wg >/dev/null 2>&1; then
-      wg show all listen-port 2>/dev/null || echo "  (暂无活跃 wg 接口或需 root 权限)"
-    else
-      echo "  (未安装 wg 命令)"
-    fi
-    echo ""
-    echo -e "  ${YELLOW}--- 2. /etc/wireguard/*.conf 配置文件中声明的 ListenPort ---${NC}"
-    if [ -d "/etc/wireguard" ]; then
-      grep -rnE "^ListenPort\s*=" /etc/wireguard/ 2>/dev/null || echo "  (未在 /etc/wireguard/ 发现 ListenPort 声明)"
-    else
-      echo "  (/etc/wireguard 目录不存在)"
-    fi
-    echo ""
-    echo -e "  ${YELLOW}--- 3. 正在监听的 UDP 端口 (10000-65535) ---${NC}"
-    ss -ulnp 2>/dev/null | grep -E ":[1-6][0-9]{4}" || netstat -ulnp 2>/dev/null | grep -E ":[1-6][0-9]{4}" || echo "  (无相关 UDP 监听)"
-    echo ""
-    echo -e "${GREEN}✓ 提示: 后端已实装系统级端口自动融合引擎，以上所有端口均已被系统自动识别并纳入防冲突名单！${NC}"
+    echo -e "${CYAN}📊 实时更新后的端口占用账本明细：${NC}"
+    "${PORTAL_DIR}/scripts/portal-cli.sh" p
     ;;
 
   uninstall|rm)
