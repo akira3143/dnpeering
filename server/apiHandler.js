@@ -431,11 +431,16 @@ export function handleReportProbePorts(body, authHeader) {
     return { status: 503, data: { success: false, error: '探针上报未配置 (PROBE_AUTH_TOKEN not set)' } };
   }
 
-  // Verify auth token with timing-safe comparison, or accept valid admin JWT
+  // Verify auth token with timing-safe comparison (accepts master token, node-specific derived token, or admin JWT)
   let isTokenValid = false;
-  if (token && configuredToken && token.length === configuredToken.length) {
+  const nodeSpecificToken = crypto.createHmac('sha256', configuredToken).update(String(body.nodeId).toLowerCase().trim()).digest('hex').slice(0, 32);
+  if (token && configuredToken) {
     try {
-      isTokenValid = crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken));
+      if (token.length === configuredToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken))) {
+        isTokenValid = true;
+      } else if (token.length === nodeSpecificToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken))) {
+        isTokenValid = true;
+      }
     } catch { isTokenValid = false; }
   }
   if (!isTokenValid) {
@@ -495,9 +500,10 @@ export function handleGetProbeInstallCommand(reqUrl, reqHeaders) {
   const host = reqHeaders['x-forwarded-host'] || reqHeaders['host'] || 'localhost:4242';
   const proto = reqHeaders['x-forwarded-proto'] || (reqHeaders['referer'] && reqHeaders['referer'].startsWith('https') ? 'https' : 'http');
   const masterUrl = `${proto}://${host}`;
-  const token = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN || '';
+  const masterSecret = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN || '';
+  const nodeToken = masterSecret ? crypto.createHmac('sha256', masterSecret).update(nodeId).digest('hex').slice(0, 32) : '';
 
-  const command = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${masterUrl}" --token "${token}" --node-id "${nodeId}"`;
+  const command = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${masterUrl}" --token "${nodeToken || masterSecret}" --node-id "${nodeId}"`;
 
   return {
     status: 200,
@@ -505,6 +511,7 @@ export function handleGetProbeInstallCommand(reqUrl, reqHeaders) {
       success: true,
       nodeId,
       masterUrl,
+      nodeToken: nodeToken || masterSecret,
       command,
     },
   };

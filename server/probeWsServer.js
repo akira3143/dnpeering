@@ -24,6 +24,20 @@ const pendingLgRequests = new Map();
 let wss = null;
 let heartbeatInterval = null;
 
+import { getActiveConfig } from './configLoader.js';
+
+/**
+ * Derives a deterministic, tamper-proof, unique per-node token from the master cluster secret
+ * @param {string} masterSecret 
+ * @param {string} nodeId 
+ * @returns {string} 32-character hex token
+ */
+export function deriveNodeToken(masterSecret, nodeId) {
+  if (!masterSecret || !nodeId) return '';
+  const cleanId = String(nodeId).toLowerCase().trim();
+  return crypto.createHmac('sha256', masterSecret).update(cleanId).digest('hex').slice(0, 32);
+}
+
 /**
  * Initializes the WebSocket server attached to the HTTP server
  * @param {import('node:http').Server} httpServer
@@ -42,20 +56,26 @@ export function initProbeWsServer(httpServer) {
 
         const configuredToken = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN;
 
-        // Verify token
+        // Verify token: accepts either the master cluster token or the unique per-node derived HMAC token
         let isAuthorized = false;
-        if (configuredToken && token) {
+        if (configuredToken && token && nodeId) {
+          const nodeSpecificToken = deriveNodeToken(configuredToken, nodeId);
           try {
-            if (token.length === configuredToken.length) {
-              isAuthorized = crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken));
+            if (token.length === configuredToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken))) {
+              isAuthorized = true;
+            } else if (token.length === nodeSpecificToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken))) {
+              isAuthorized = true;
             }
           } catch {
             isAuthorized = false;
           }
         }
 
-        if (!isAuthorized || !nodeId) {
-          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized probe token or missing nodeId\r\n');
+        const activeCfg = getActiveConfig();
+        const isValidNode = (activeCfg?.nodes || []).some(n => n.id.toLowerCase() === nodeId.toLowerCase());
+
+        if (!isAuthorized || !nodeId || !isValidNode) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized probe token or invalid nodeId\r\n');
           socket.destroy();
           return;
         }

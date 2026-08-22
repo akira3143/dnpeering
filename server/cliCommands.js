@@ -58,12 +58,13 @@ export async function handleCliProbe(targetNodeArg = '') {
   const nodes = config.nodes || [];
 
   let coreUrl = envCoreUrl;
-  if (!coreUrl) {
+  if (!coreUrl || coreUrl.includes('127.0.0.1') || coreUrl.includes('localhost')) {
     const hubNode = nodes.find((n) => n.features && n.features.some((f) => f.includes('Hub') || f.includes('Core'))) || nodes[0];
-    if (hubNode && hubNode.endpoint) {
-      coreUrl = 'http://' + hubNode.endpoint + ':4242';
-    } else if (hubNode && hubNode.ipv4) {
-      coreUrl = 'http://' + hubNode.ipv4 + ':4242';
+    const rawDomain = hubNode?.endpointDomain || hubNode?.endpoint;
+    if (rawDomain && !rawDomain.includes('example') && !rawDomain.includes('127.0.0.1')) {
+      const hasProto = rawDomain.startsWith('http://') || rawDomain.startsWith('https://');
+      const hasPort = rawDomain.includes(':') && !rawDomain.startsWith('http');
+      coreUrl = (hasProto ? '' : 'http://') + rawDomain + (hasPort || hasProto ? '' : ':4242');
     } else {
       coreUrl = 'http://127.0.0.1:4242';
     }
@@ -81,25 +82,40 @@ export async function handleCliProbe(targetNodeArg = '') {
     }
   } catch {}
 
+  const printNodeCommand = (matched) => {
+    const isLocal = matched.id === 'jp07' || (matched.features && matched.features.some((f) => f.includes('Hub') || f.includes('Core')));
+    const probe = liveProbes[matched.id.toLowerCase()];
+    const isOnline = isLocal || Boolean(probe && probe.online);
+    const latency = probe?.latencyMs;
+    // Derive unique, tamper-proof per-node HMAC token
+    const nodeToken = crypto.createHmac('sha256', token).update(matched.id).digest('hex').slice(0, 32);
+
+    console.log('\n\x1b[36m==================================================================\x1b[0m');
+    console.log('  🌐 节点专属探针配置与一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.code + ' - ' + matched.name + '\x1b[0m)');
+    console.log('\x1b[36m==================================================================\x1b[0m');
+    console.log('  节点代号 ID   : \x1b[33m' + matched.id + '\x1b[0m (Code: ' + matched.code + ')');
+    console.log('  当前探针状态 : ' + (isOnline ? ('\x1b[32m🟢 在线' + (isLocal ? ' (本地主节点)' : ' (' + (latency || 1) + 'ms)') + '\x1b[0m') : '\x1b[90m⚪ 离线 (未部署/未连接)\x1b[0m'));
+    console.log('  主控 Master  : \x1b[32m' + coreUrl + '\x1b[0m');
+    console.log('  节点独立 Token: \x1b[33m' + nodeToken + '\x1b[0m (专属 HMAC 独立签名，防止跨节点伪造)');
+    console.log('\n\x1b[33m👉 请直接复制以下单行命令，粘贴到目标 VPS 终端回车执行即可（0 交互）：\x1b[0m\n');
+    const cmd = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${coreUrl}" --token "${nodeToken}" --node-id "${matched.id}"`;
+    console.log('\x1b[1m\x1b[32m' + cmd + '\x1b[0m\n');
+  };
+
   const targetArg = String(targetNodeArg).toLowerCase().trim();
 
+  // If user passed a specific node argument directly (e.g. dnp probe 4 or dnp probe us01)
   if (targetArg && targetArg !== 'gen' && targetArg !== 'list' && targetArg !== 'all' && targetArg !== 'nodes') {
-    const matched = nodes.find((n) => n.id.toLowerCase() === targetArg || (n.code && n.code.toLowerCase() === targetArg));
-    if (matched) {
-      const isLocal = matched.id === 'jp07' || matched.id.includes('local') || matched.id.includes('hub');
-      const probe = liveProbes[matched.id.toLowerCase()];
-      const isOnline = isLocal || Boolean(probe && probe.online);
-      const latency = probe?.latencyMs;
+    let matched = null;
+    const num = parseInt(targetArg, 10);
+    if (!isNaN(num) && num >= 1 && num <= nodes.length) {
+      matched = nodes[num - 1];
+    } else {
+      matched = nodes.find((n) => n.id.toLowerCase() === targetArg || (n.code && n.code.toLowerCase() === targetArg));
+    }
 
-      console.log('\n\x1b[36m==================================================================\x1b[0m');
-      console.log('  🌐 节点专属探针配置与一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.code + ' - ' + matched.name + '\x1b[0m)');
-      console.log('\x1b[36m==================================================================\x1b[0m');
-      console.log('  节点代号 ID   : \x1b[33m' + matched.id + '\x1b[0m (Code: ' + matched.code + ')');
-      console.log('  当前探针状态 : ' + (isOnline ? ('\x1b[32m🟢 在线' + (isLocal ? ' (本地主节点)' : ' (' + (latency || 1) + 'ms)') + '\x1b[0m') : '\x1b[90m⚪ 离线 (未部署/未连接)\x1b[0m'));
-      console.log('  主控 Master  : \x1b[32m' + coreUrl + '\x1b[0m');
-      console.log('\n\x1b[33m👉 请直接复制以下单行命令，粘贴到目标 VPS 终端回车执行即可（0 交互）：\x1b[0m\n');
-      const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "' + coreUrl + '" --token "' + token + '" --node-id "' + matched.id + '"';
-      console.log('\x1b[1m\x1b[32m' + cmd + '\x1b[0m\n');
+    if (matched) {
+      printNodeCommand(matched);
       return;
     } else {
       console.log('\n\x1b[31m❌ 未找到代号为 [' + targetArg + '] 的节点。\x1b[0m');
@@ -108,11 +124,12 @@ export async function handleCliProbe(targetNodeArg = '') {
     }
   }
 
+  // Print Node list table overview
   console.log('\n\x1b[36m==================================================================\x1b[0m');
   console.log('  🦅 AkiLab DN42 - 全网 PoP 节点与探针部署管理 (Node Probe Manager)');
   console.log('\x1b[36m==================================================================\x1b[0m');
   console.log('  主控端 Master 地址 : \x1b[32m' + coreUrl + '\x1b[0m');
-  console.log('  全局通信鉴权 Token : \x1b[33m' + token + '\x1b[0m');
+  console.log('  通信鉴权 Token 模式: \x1b[33mHMAC-SHA256 动态派生\x1b[0m (每个节点拥有独立唯一密钥)');
   console.log('\n\x1b[36m📡 全网 PoP 节点在线状态与代号清单 (Node List)：\x1b[0m');
   console.log('\x1b[90m──────────────────────────────────────────────────────────────────\x1b[0m');
   console.log('  序号 | 节点代号 (ID / Code) | 节点名称与地区              | 探针在线状态');
@@ -127,23 +144,45 @@ export async function handleCliProbe(targetNodeArg = '') {
     const idPad = (n.id + '  /  ' + n.code).padEnd(20);
     const namePad = ((n.flag || '🌐') + ' ' + n.name).padEnd(26);
     const statusText = isOnline
-      ? (isLocal ? '\x1b[32m🟢 在线 (本地主节点)\x1b[0m' : ('\x1b[32m🟢 在线 (' + (latency || 1) + 'ms)\x1b[0m'))
+      ? (isLocal ? '\x1b[32m🟢 在线 (本地主节点)\x1b[0m' : (`\x1b[32m🟢 在线 (${latency || 1}ms)\x1b[0m`))
       : '\x1b[90m⚪ 离线 (未部署/未连接)\x1b[0m';
 
     console.log('  [' + (idx + 1) + ']   ' + idPad + ' | ' + namePad + ' | ' + statusText);
   });
   console.log('\x1b[90m──────────────────────────────────────────────────────────────────\x1b[0m\n');
 
-  console.log('\x1b[36m👉 远端节点专属一键无人值守安装指令（复制并在目标机器回车执行）：\x1b[0m\n');
+  // Interactive selection if running in terminal
+  if (process.stdin.isTTY) {
+    const readline = await import('node:readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  nodes.forEach((n, idx) => {
-    if (idx === 0 || n.id === 'jp07') return;
-    const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "' + coreUrl + '" --token "' + token + '" --node-id "' + n.id + '"';
-    console.log('  \x1b[1m\x1b[33m[' + n.id + ']\x1b[0m ' + (n.flag || '🌐') + ' ' + n.code + ' - ' + n.name + ':');
-    console.log('  \x1b[32m' + cmd + '\x1b[0m\n');
-  });
+    return new Promise((resolve) => {
+      rl.question('\x1b[36m👉 请输入节点序号 [1-' + nodes.length + '] 或代号 ID (如 4 或 us01，输入 q 退出): \x1b[0m', (ans) => {
+        rl.close();
+        const input = (ans || '').trim().toLowerCase();
+        if (!input || input === 'q' || input === 'exit') {
+          console.log('\n\x1b[90m已退出。\x1b[0m\n');
+          return resolve();
+        }
+        let chosen = null;
+        const num = parseInt(input, 10);
+        if (!isNaN(num) && num >= 1 && num <= nodes.length) {
+          chosen = nodes[num - 1];
+        } else {
+          chosen = nodes.find((n) => n.id.toLowerCase() === input || (n.code && n.code.toLowerCase() === input));
+        }
 
-  console.log('\x1b[90m💡 提示: 执行 dnp probe <节点ID或Code> (如 dnp probe us01 或 dnp probe US-1) 可单独获取该节点专属指令。\x1b[0m\n');
+        if (chosen) {
+          printNodeCommand(chosen);
+        } else {
+          console.log('\n\x1b[31m❌ 输入无效，未找到匹配的节点。\x1b[0m\n');
+        }
+        resolve();
+      });
+    });
+  } else {
+    console.log('\x1b[90m💡 提示: 执行 dnp probe <节点序号/ID/Code> (如 dnp probe 4 或 dnp probe us01) 可直接生成专属安装指令。\x1b[0m\n');
+  }
 }
 
 export async function handleCliPorts() {
