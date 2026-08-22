@@ -291,6 +291,7 @@ function normalizeConfig(raw) {
       portFormulaDisplay: n.port_formula || n.portFormulaDisplay || res.network.portFormulaDisplay,
       lookingGlassUrl: n.looking_glass_url || n.lookingGlassUrl || '',
       dn42WhoisUrl: n.whois_url || n.dn42_whois_url || n.dn42WhoisUrl || `https://explorer.burble.com/#/AS${cleanAsn}`,
+      masterUrl: n.master_url || n.core_url || n.masterUrl || n.coreUrl || n.auto_peer_url || n.autoPeerUrl || '',
     };
   }
 

@@ -57,7 +57,7 @@ export async function handleCliProbe(targetNodeArg = '') {
   const config = (await loadUnifiedConfig()) || getActiveConfig();
   const nodes = config.nodes || [];
 
-  let coreUrl = envCoreUrl;
+  let coreUrl = envCoreUrl || config?.network?.masterUrl || '';
   if (!coreUrl || coreUrl.includes('127.0.0.1') || coreUrl.includes('localhost')) {
     const hubNode = nodes.find((n) => n.features && n.features.some((f) => f.includes('Hub') || f.includes('Core'))) || nodes[0];
     const rawDomain = hubNode?.endpointDomain || hubNode?.endpoint;

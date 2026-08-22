@@ -26,6 +26,7 @@ network:
   port_formula: "20000 + (ASN % 10000)"
   whois_url: ""                        # WHOIS 外部直达地址 (留空则自动按 explorer.burble.com 动态生成)
   looking_glass_url: ""                # 外部 Looking Glass 地址 (留空则平滑滚动到本站内置 LG)
+  master_url: ""                       # 主控面板公网/内网通信地址 (如 https://dn42.akilab.meme 或 http://198.51.100.1:4242，用于探针一键安装脚本)
 
 # ------------------------------------------------------------------------------
 # 2. 全球 PoP 节点列表 (支持随时增减修改，前台秒级呈现)
