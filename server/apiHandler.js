@@ -315,12 +315,20 @@ export async function handleAuthStatus(body) {
  * Handles POST /api/auth/login-password
  */
 export async function handleLoginPassword(body) {
-  const { asn, password, rememberMe } = body || {};
-  const result = await verifyPasswordLogin(asn, password, Boolean(rememberMe));
-  return {
-    status: result.success ? 200 : 400,
-    data: result,
-  };
+  try {
+    const { asn, password, rememberMe } = body || {};
+    const result = await verifyPasswordLogin(asn, password, Boolean(rememberMe));
+    return {
+      status: result.success ? 200 : 400,
+      data: result,
+    };
+  } catch (err) {
+    console.error('[API] handleLoginPassword error:', err);
+    return {
+      status: 500,
+      data: { success: false, error: '登录处理异常，请检查配置或稍后重试' },
+    };
+  }
 }
 
 /**

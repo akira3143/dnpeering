@@ -339,6 +339,25 @@ export async function setPasswordForAsn(asn, newPassword) {
 }
 
 /**
+ * Constant-time hex string comparison that never throws RangeError on mismatched lengths
+ */
+function safeCompareHex(hexA, hexB) {
+  if (!hexA || !hexB) return false;
+  const cleanA = String(hexA).trim();
+  const cleanB = String(hexB).trim();
+  try {
+    const bufA = Buffer.from(cleanA, 'hex');
+    const bufB = Buffer.from(cleanB, 'hex');
+    if (bufA.length === 0 || bufA.length !== bufB.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Verifies password and logs in user
  */
 export async function verifyPasswordLogin(userInput, password, rememberMe = false) {
@@ -348,15 +367,30 @@ export async function verifyPasswordLogin(userInput, password, rememberMe = fals
   // 1. Root Administrator Master Account (env-based)
   const normalized = rawInput.toLowerCase().replace(/^as/, '');
   if (normalized === 'akira' || rawInput.toLowerCase() === 'akira' || normalized === 'admin') {
-    const adminHash = process.env.ADMIN_PASSWORD_HASH;
-    const adminSalt = process.env.ADMIN_PASSWORD_SALT;
-    if (!adminHash || !adminSalt) {
-      return { success: false, error: '管理员账户未配置（缺少 ADMIN_PASSWORD_HASH/SALT 环境变量）' };
+    const adminHash = (process.env.ADMIN_PASSWORD_HASH || '').trim();
+    const adminSalt = (process.env.ADMIN_PASSWORD_SALT || '').trim();
+    const plainAdminPwd = (process.env.ADMIN_PASSWORD || '').trim();
+
+    if (!adminHash && !plainAdminPwd) {
+      return { success: false, error: '管理员账户未配置（请在 .env 中设置 ADMIN_PASSWORD 或 ADMIN_PASSWORD_HASH/SALT）' };
     }
-    const inputHash = crypto.scryptSync(String(password || ''), adminSalt, 64).toString('hex');
-    if (!crypto.timingSafeEqual(Buffer.from(inputHash, 'hex'), Buffer.from(adminHash, 'hex'))) {
+
+    let isValid = false;
+    if (adminHash && adminSalt) {
+      try {
+        const inputHash = crypto.scryptSync(String(password || ''), adminSalt, 64).toString('hex');
+        isValid = safeCompareHex(inputHash, adminHash);
+      } catch (err) {
+        console.error('[Auth] Admin password hash verification error:', err);
+      }
+    } else if (plainAdminPwd) {
+      isValid = String(password || '') === plainAdminPwd;
+    }
+
+    if (!isValid) {
       return { success: false, error: '管理员密码错误，请核对后重试。' };
     }
+
     const ttlSeconds = rememberMe ? 48 * 3600 : 40 * 60;
     const userPayload = {
       asn: 'akira',
@@ -395,9 +429,15 @@ export async function verifyPasswordLogin(userInput, password, rememberMe = fals
     };
   }
 
-  const inputHash = crypto.scryptSync(String(password || ''), record.salt, 64).toString('hex');
+  let isValid = false;
+  try {
+    const inputHash = crypto.scryptSync(String(password || ''), record.salt, 64).toString('hex');
+    isValid = safeCompareHex(inputHash, record.hash);
+  } catch (err) {
+    console.error('[Auth] Password hash calculation error:', err);
+  }
 
-  if (!crypto.timingSafeEqual(Buffer.from(inputHash, 'hex'), Buffer.from(record.hash, 'hex'))) {
+  if (!isValid) {
     return {
       success: false,
       error: '登录密码错误，请核对后重试（如遗忘可通过 SSH 签名重新覆盖重置）。',
