@@ -283,6 +283,11 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
 
   // Cooldown & Submitting State
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedInfo, setSubmittedInfo] = useState<{
+    sessionId: string;
+    version: number;
+    isNew: boolean;
+  } | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(() => {
     try {
       const stored = localStorage.getItem('akilab_peer_cooldown_until');
@@ -407,9 +412,15 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
         localStorage.setItem('akilab_my_peerings', JSON.stringify(updatedList));
       } catch {}
 
+      setSubmittedInfo({
+        sessionId: data.sessionId,
+        version: data.version || 1,
+        isNew: Boolean(data.isNew),
+      });
+
       showToast(
         data.isNew
-          ? `🎉 对等申请已投递！会话 ID: ${data.sessionId}`
+          ? `🎉 对等申请已成功送达管理员！会话 ID: ${data.sessionId}`
           : `🔄 申请已更新至版本 v${data.version}！会话 ID: ${data.sessionId}`,
         'success'
       );
@@ -1060,32 +1071,56 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
               </div>
             </div>
 
-            {/* Bottom Action Footer with Single Direct Cyber Submit Button */}
-            <div className="p-4 bg-black/50 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
-              <div className="text-xs text-slate-400 flex items-center gap-2 font-sans min-w-0">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="truncate">
-                  {activeTab === 'markdown'
-                    ? '申请信已整合安全参数与附加留言，点击右侧按钮直接一键提交。'
-                    : '配置代码已严格根据参数实时渲染，点击右侧按钮直接一键投递。'}
-                </span>
-              </div>
+            {/* Bottom Action Footer with Dynamic Feedback and Submit Button */}
+            <div className="p-4 bg-black/60 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 backdrop-blur-md">
+              {submittedInfo ? (
+                <div className="flex items-center gap-2.5 text-xs text-emerald-300 font-sans min-w-0 bg-emerald-950/70 border border-emerald-500/40 px-3.5 py-2 rounded-xl shadow-lg shadow-emerald-950/50 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full sm:w-auto">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 truncate">
+                    <span className="font-semibold text-emerald-200">
+                      {submittedInfo.isNew ? '🎉 申请已成功送达管理员！' : `🔄 申请已更新至 v${submittedInfo.version}！`}
+                    </span>
+                    <span className="font-mono text-slate-300 text-[11px]">
+                      会话: <strong className="text-cyan-300">{submittedInfo.sessionId}</strong>
+                    </span>
+                  </div>
+                  <span className="text-emerald-400/80 text-[11px] hidden lg:inline ml-auto">
+                    (管理员 Telegram 已收到即时通知)
+                  </span>
+                </div>
+              ) : (
+                <div className="text-xs text-slate-400 flex items-center gap-2 font-sans min-w-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="truncate">
+                    {activeTab === 'markdown'
+                      ? '申请信已整合安全参数与附加留言，点击右侧按钮直接一键提交。'
+                      : '配置代码已严格根据参数实时渲染，点击右侧按钮直接一键投递。'}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
                 <button
                   type="button"
                   onClick={handleSubmitApplication}
                   disabled={isSubmitting || cooldownSeconds > 0}
-                  className={`btn-primary px-6 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all whitespace-nowrap shrink-0 ${
-                    isSubmitting || cooldownSeconds > 0
-                      ? 'opacity-70 cursor-not-allowed filter grayscale-[0.3]'
-                      : 'hover:scale-[1.02] active:scale-[0.98]'
+                  className={`px-6 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all whitespace-nowrap shrink-0 ${
+                    submittedInfo && cooldownSeconds > 0
+                      ? 'bg-emerald-600/25 border border-emerald-500/50 text-emerald-200 cursor-not-allowed shadow-emerald-950/40'
+                      : isSubmitting || cooldownSeconds > 0
+                      ? 'bg-slate-800/80 border border-white/10 text-slate-400 opacity-70 cursor-not-allowed filter grayscale-[0.3]'
+                      : 'btn-primary hover:scale-[1.02] active:scale-[0.98]'
                   }`}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span>正在投递申请到 AkiLab...</span>
+                    </>
+                  ) : submittedInfo && cooldownSeconds > 0 ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>已送达 ({cooldownSeconds}s)</span>
                     </>
                   ) : cooldownSeconds > 0 ? (
                     <>
