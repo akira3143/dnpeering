@@ -56,11 +56,7 @@ export const Footer: React.FC = () => {
       return `https://matrix.to/#/${cleanHandle}`;
     }
     if (t === 'whois' || t === 'registry' || p.includes('whois')) {
-      if (cleanHandle.toUpperCase().startsWith('AS') || /^\d+$/.test(cleanHandle)) {
-        const asnTag = cleanHandle.toUpperCase().startsWith('AS') ? cleanHandle.toUpperCase() : `AS${cleanHandle}`;
-        return `https://git.dn42.dev/dn42/registry/src/branch/master/data/aut-num/${asnTag}`;
-      }
-      return `https://git.dn42.dev/dn42/registry/src/branch/master/data/mntner/${encodeURIComponent(cleanHandle)}`;
+      return `https://explorer.burble.com/#/${encodeURIComponent(cleanHandle)}`;
     }
     if (cleanHandle.startsWith('http://') || cleanHandle.startsWith('https://')) {
       return cleanHandle;
@@ -68,13 +64,9 @@ export const Footer: React.FC = () => {
     return undefined;
   };
 
-  const cleanAsnTag = (networkMeta.asn || 'AS4242423143').toUpperCase().startsWith('AS')
-    ? (networkMeta.asn || 'AS4242423143').toUpperCase()
-    : `AS${networkMeta.asn || '4242423143'}`;
-
   const effectiveWhoisUrl =
     networkMeta.dn42WhoisUrl ||
-    `https://git.dn42.dev/dn42/registry/src/branch/master/data/aut-num/${cleanAsnTag}`;
+    `https://explorer.burble.com/#/${encodeURIComponent(networkMeta.asn || 'AS4242423143')}`;
 
   return (
     <footer id="contact" className="w-full border-t border-white/10 bg-[#05070c] py-12 mt-12 text-xs text-slate-400 font-sans scroll-mt-20">

@@ -14,7 +14,7 @@ export const NETWORK_META: NetworkMeta = {
   bgpMode: 'MP-BGP + Extended Next Hop (ENH) / Dual-Stack Supported',
   portFormulaDisplay: '20000 + (ASN % 10000) [严格限制 10000~65535，多实例自动顺延 30000/40000+ASN]',
   lookingGlassUrl: 'https://lg.example.dn42',
-  dn42WhoisUrl: 'https://git.dn42.dev/dn42/registry/src/branch/master/data/aut-num/AS4242421337',
+  dn42WhoisUrl: 'https://explorer.burble.com/#/AS4242421337',
   topologyUrl: 'https://topo.example.dn42',
   flapAlertUrl: 'https://flap.example.dn42',
   autoPeerUrl: 'https://peer.example.dn42',
