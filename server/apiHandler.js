@@ -19,7 +19,7 @@ import {
   setPasswordForAsn,
   verifyPasswordLogin,
 } from './authService.js';
-import { queryPeerBgpStatus, executeLgCommand } from './lookingGlassService.js';
+import { queryPeerBgpStatus, executeLgCommand, getHttpProbeStatuses } from './lookingGlassService.js';
 import { getPublicNetworkData, loadUnifiedConfig } from './configLoader.js';
 import crypto from 'node:crypto';
 
@@ -463,20 +463,25 @@ export function handleReportProbePorts(body, authHeader) {
 export function handleGetProbeStatus() {
   try {
     const { getConnectedNodesStatus } = awaitImportProbeWs();
-    const probeMap = getConnectedNodesStatus();
+    const wsProbeMap = getConnectedNodesStatus ? getConnectedNodesStatus() : {};
+    const httpProbeMap = getHttpProbeStatuses ? getHttpProbeStatuses() : {};
     return {
       status: 200,
       data: {
         success: true,
-        probes: probeMap,
+        probes: {
+          ...httpProbeMap,
+          ...wsProbeMap,
+        },
       },
     };
   } catch (err) {
+    const httpProbeMap = getHttpProbeStatuses ? getHttpProbeStatuses() : {};
     return {
       status: 200,
       data: {
         success: true,
-        probes: {},
+        probes: httpProbeMap,
       },
     };
   }

@@ -40,6 +40,75 @@ export function sanitizeTarget(rawInput) {
   return trimmed;
 }
 
+const httpProbeStatusCache = new Map();
+
+/**
+ * Checks health of a bird-lgproxy HTTP endpoint
+ */
+export async function checkHttpProbeHealth(nodeId, proxyUrl) {
+  if (!proxyUrl || proxyUrl.includes('127.0.0.1') || proxyUrl.includes('localhost')) {
+    const status = { online: true, latencyMs: 1, lastSeen: Date.now(), mode: 'local' };
+    httpProbeStatusCache.set(String(nodeId).toLowerCase(), status);
+    return status;
+  }
+
+  const cleanId = String(nodeId).toLowerCase();
+  const t0 = Date.now();
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+    const headers = { 'Accept': 'text/plain, application/json' };
+    if (DEFAULT_PROXY_TOKEN) {
+      headers['Authorization'] = `Bearer ${DEFAULT_PROXY_TOKEN}`;
+    }
+
+    const res = await fetch(`${proxyUrl}/bird?q=show%20status`, {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const latencyMs = Math.max(1, Date.now() - t0);
+
+    if (res.ok) {
+      const status = { online: true, latencyMs, lastSeen: Date.now(), mode: 'http_proxy' };
+      httpProbeStatusCache.set(cleanId, status);
+      return status;
+    }
+  } catch {}
+
+  const status = { online: false, latencyMs: 0, lastSeen: Date.now(), mode: 'http_proxy' };
+  httpProbeStatusCache.set(cleanId, status);
+  return status;
+}
+
+export function getHttpProbeStatuses() {
+  const res = {};
+  for (const [k, v] of httpProbeStatusCache.entries()) {
+    res[k] = v;
+  }
+  return res;
+}
+
+// Background health ping for all nodes every 20 seconds
+try {
+  const pollHttpProbes = async () => {
+    try {
+      const activeCfg = getActiveConfig();
+      if (activeCfg && Array.isArray(activeCfg.nodes)) {
+        for (const n of activeCfg.nodes) {
+          const endpoint = n.lgProxyUrl || (n.endpoint ? `http://${n.endpoint}:5000` : '');
+          if (endpoint) {
+            checkHttpProbeHealth(n.id, endpoint).catch(() => {});
+          }
+        }
+      }
+    } catch {}
+  };
+  pollHttpProbes();
+  setInterval(pollHttpProbes, 20000).unref?.();
+} catch {}
+
 /**
  * Resolves endpoint URL for a given node ID
  */
