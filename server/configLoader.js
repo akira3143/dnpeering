@@ -123,6 +123,28 @@ let activeConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let isWatcherActive = false;
 
 /**
+ * Strips comments from a YAML line while preserving '#' inside quotes or URLs
+ */
+function stripYamlComment(line) {
+  let inDouble = false;
+  let inSingle = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"' && !inSingle && (i === 0 || line[i - 1] !== '\\')) {
+      inDouble = !inDouble;
+    } else if (char === "'" && !inDouble) {
+      inSingle = !inSingle;
+    } else if (char === '#' && !inDouble && !inSingle) {
+      // '#' only starts a YAML comment if at the beginning of the line or preceded by whitespace
+      if (i === 0 || /\s/.test(line[i - 1])) {
+        return line.slice(0, i);
+      }
+    }
+  }
+  return line;
+}
+
+/**
  * Lightweight Zero-Dependency YAML to JS Object Parser
  * Handles clean standard YAML structures used in configs
  */
@@ -135,7 +157,7 @@ export function parseYaml(yamlString) {
 
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i];
-    const lineWithoutComment = rawLine.replace(/#.*$/, '');
+    const lineWithoutComment = stripYamlComment(rawLine);
     if (!lineWithoutComment.trim()) continue;
 
     const indent = rawLine.search(/\S/);
@@ -182,7 +204,7 @@ export function parseYaml(yamlString) {
         // Lookahead to check if next item is array or object
         let nextIsArray = false;
         for (let j = i + 1; j < lines.length; j++) {
-          const lookLine = lines[j].replace(/#.*$/, '');
+          const lookLine = stripYamlComment(lines[j]);
           if (lookLine.trim()) {
             if (lookLine.trim().startsWith('-')) {
               nextIsArray = true;
