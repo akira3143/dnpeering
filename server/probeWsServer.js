@@ -54,16 +54,30 @@ export function initProbeWsServer(httpServer) {
         const token = url.searchParams.get('token') || (request.headers['authorization'] || '').replace(/^Bearer\s+/i, '').trim();
         const nodeId = (url.searchParams.get('nodeId') || request.headers['x-node-id'] || '').toLowerCase().trim();
 
-        const configuredToken = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN;
+        const cleanReqId = nodeId.toLowerCase().trim();
+        const activeCfg = getActiveConfig();
+        const matchedNode = (activeCfg?.nodes || []).find(n => {
+          const nId = String(n.id || '').toLowerCase().trim();
+          const nCode = String(n.code || '').toLowerCase().trim();
+          const clean1 = nId.replace(/[^a-z0-9]/g, '');
+          const clean2 = nCode.replace(/[^a-z0-9]/g, '');
+          const reqClean = cleanReqId.replace(/[^a-z0-9]/g, '');
+          return nId === cleanReqId || nCode === cleanReqId || (clean1 && clean1 === reqClean) || (clean2 && clean2 === reqClean);
+        });
+
+        const canonicalNodeId = matchedNode ? matchedNode.id.toLowerCase() : cleanReqId;
 
         // Verify token: accepts either the master cluster token or the unique per-node derived HMAC token
         let isAuthorized = false;
-        if (configuredToken && token && nodeId) {
-          const nodeSpecificToken = deriveNodeToken(configuredToken, nodeId);
+        if (configuredToken && token && canonicalNodeId) {
+          const nodeSpecificToken1 = deriveNodeToken(configuredToken, canonicalNodeId);
+          const nodeSpecificToken2 = deriveNodeToken(configuredToken, cleanReqId);
           try {
             if (token.length === configuredToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(configuredToken))) {
               isAuthorized = true;
-            } else if (token.length === nodeSpecificToken.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken))) {
+            } else if (token.length === nodeSpecificToken1.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken1))) {
+              isAuthorized = true;
+            } else if (token.length === nodeSpecificToken2.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(nodeSpecificToken2))) {
               isAuthorized = true;
             }
           } catch {
@@ -71,17 +85,15 @@ export function initProbeWsServer(httpServer) {
           }
         }
 
-        const activeCfg = getActiveConfig();
-        const isValidNode = (activeCfg?.nodes || []).some(n => n.id.toLowerCase() === nodeId.toLowerCase());
-
-        if (!isAuthorized || !nodeId || !isValidNode) {
+        if (!isAuthorized || !matchedNode) {
+          console.warn(`[Probe WS] ❌ 远端探针握手被拒绝 (401): nodeId='${nodeId}', matchedNode=${matchedNode?.id || 'none'}, tokenValid=${isAuthorized}`);
           socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized probe token or invalid nodeId\r\n');
           socket.destroy();
           return;
         }
 
         wss.handleUpgrade(request, socket, head, (ws) => {
-          wss.emit('connection', ws, request, { nodeId, token });
+          wss.emit('connection', ws, request, { nodeId: canonicalNodeId, token });
         });
       }
     } catch (err) {

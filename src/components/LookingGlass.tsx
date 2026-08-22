@@ -269,8 +269,14 @@ export const LookingGlass: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {nodes.map((node) => {
                 const isSelected = node.id === selectedNodeId;
-                const isOnline = Boolean(probeStatuses[node.id]?.online || node.id === 'jp07');
-                const latency = probeStatuses[node.id]?.latencyMs;
+                const isOnline = Boolean(
+                  probeStatuses[node.id]?.online ||
+                  probeStatuses[node.id.toLowerCase()]?.online ||
+                  (node.code && probeStatuses[node.code.toLowerCase()]?.online) ||
+                  node.id === 'jp07' ||
+                  (node.features && node.features.some((f) => f.includes('Hub') || f.includes('Core')))
+                );
+                const latency = probeStatuses[node.id]?.latencyMs || probeStatuses[node.id.toLowerCase()]?.latencyMs;
                 return (
                   <button
                     key={node.id}

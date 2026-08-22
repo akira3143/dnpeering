@@ -51,9 +51,10 @@ class RawWebSocketClient:
             self.sock = raw_sock
 
         sec_key = base64.b64encode(os.urandom(16)).decode('utf-8')
+        host_hdr = host if (port == 80 and not is_ssl) or (port == 443 and is_ssl) else f"{host}:{port}"
         handshake_headers = [
             f"GET {path} HTTP/1.1",
-            f"Host: {host}:{port}",
+            f"Host: {host_hdr}",
             "Upgrade: websocket",
             "Connection: Upgrade",
             f"Sec-WebSocket-Key: {sec_key}",
@@ -62,19 +63,28 @@ class RawWebSocketClient:
         ]
         for k, v in self.headers.items():
             handshake_headers.append(f"{k}: {v}")
-        handshake_headers.append("\r\n")
 
-        self.sock.sendall("\r\n".join(handshake_headers).encode('utf-8'))
+        req_payload = "\r\n".join(handshake_headers) + "\r\n\r\n"
+        self.sock.sendall(req_payload.encode('utf-8'))
+
         response = b""
         while b"\r\n\r\n" not in response:
             chunk = self.sock.recv(4096)
             if not chunk:
-                raise ConnectionError("WebSocket handshake failed: EOF")
+                raise ConnectionError("WebSocket 握手失败: 服务端提前关闭了连接 (EOF)")
             response += chunk
 
-        status_line = response.split(b"\r\n")[0]
-        if b"101" not in status_line:
-            raise ConnectionError(f"Handshake rejected: {status_line.decode('utf-8', 'ignore')}")
+        status_line = response.split(b"\r\n")[0].decode('utf-8', 'ignore')
+        if "101" not in status_line:
+            headers_preview = response.decode('utf-8', 'ignore')[:600]
+            hint = ""
+            if "200" in status_line:
+                hint = "\n⚠️ 诊断发现: 主控端反向代理 (如 Nginx / Caddy) 拦截了 WebSocket 请求并降级为普通网页。\n👉 解决方案: 请在主控面板的 Nginx 反代配置中增加 WebSocket 支持:\n     proxy_http_version 1.1;\n     proxy_set_header Upgrade $http_upgrade;\n     proxy_set_header Connection \"upgrade\";"
+            elif "401" in status_line:
+                hint = "\n⚠️ 诊断发现: 通信鉴权 Token 被主控端拒绝。\n👉 解决方案: 请确保主控端已执行 `dnp r` 重载最新服务，并核对 --token 参数是否正确。"
+            elif "404" in status_line:
+                hint = "\n⚠️ 诊断发现: 主控端 WebSocket 路由未命中 (/ws/probe)。\n👉 解决方案: 请在主控端执行 `dnp u` 升级服务并重启。"
+            raise ConnectionError(f"握手被拒绝 [{status_line}]{hint}\n[服务器响应头部]\n{headers_preview.strip()}")
 
         self.connected = True
         self.sock.settimeout(None)
