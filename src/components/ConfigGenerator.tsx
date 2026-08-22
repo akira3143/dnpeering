@@ -420,8 +420,8 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
 
       showToast(
         data.isNew
-          ? `🎉 对等互联申请已成功投递！会话 ID: ${data.sessionId}`
-          : `🔄 互联配置已更新至版本 v${data.version}！会话 ID: ${data.sessionId}`,
+          ? `✓ 成功投递 · ${data.sessionId}`
+          : `✓ 配置已更新 (v${data.version}) · ${data.sessionId}`,
         'success'
       );
       
@@ -1074,19 +1074,11 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
             {/* Bottom Action Footer with Dynamic Feedback and Submit Button */}
             <div className="p-4 bg-black/60 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 backdrop-blur-md">
               {submittedInfo ? (
-                <div className="flex items-center gap-2.5 text-xs text-emerald-300 font-sans min-w-0 bg-emerald-950/70 border border-emerald-500/40 px-3.5 py-2 rounded-xl shadow-lg shadow-emerald-950/50 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full sm:w-auto">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 truncate">
-                    <span className="font-semibold text-emerald-200">
-                      {submittedInfo.isNew ? '🎉 对等互联申请已成功投递！' : `🔄 互联配置已更新至 v${submittedInfo.version}！`}
-                    </span>
-                    <span className="font-mono text-slate-300 text-[11px]">
-                      会话: <strong className="text-cyan-300">{submittedInfo.sessionId}</strong>
-                    </span>
-                  </div>
-                  <span className="text-emerald-400/80 text-[11px] hidden lg:inline ml-auto">
-                    (节点已进入配置部署流水线)
-                  </span>
+                <div className="flex items-center gap-2 text-xs text-emerald-300 font-mono min-w-0 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-lg animate-in fade-in duration-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="font-semibold text-emerald-200">成功投递</span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-slate-300">会话: <code className="text-cyan-300 font-bold select-all">{submittedInfo.sessionId}</code></span>
                 </div>
               ) : (
                 <div className="text-xs text-slate-400 flex items-center gap-2 font-sans min-w-0">
@@ -1106,7 +1098,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                   disabled={isSubmitting || cooldownSeconds > 0}
                   className={`px-6 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all whitespace-nowrap shrink-0 ${
                     submittedInfo && cooldownSeconds > 0
-                      ? 'bg-emerald-600/25 border border-emerald-500/50 text-emerald-200 cursor-not-allowed shadow-emerald-950/40'
+                      ? 'bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 cursor-not-allowed'
                       : isSubmitting || cooldownSeconds > 0
                       ? 'bg-slate-800/80 border border-white/10 text-slate-400 opacity-70 cursor-not-allowed filter grayscale-[0.3]'
                       : 'btn-primary hover:scale-[1.02] active:scale-[0.98]'
@@ -1115,22 +1107,22 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>正在投递互联配置到节点...</span>
+                      <span>正在投递...</span>
                     </>
                   ) : submittedInfo && cooldownSeconds > 0 ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>已投递完成 ({cooldownSeconds}s)</span>
+                      <span>已投递 ({cooldownSeconds}s)</span>
                     </>
                   ) : cooldownSeconds > 0 ? (
                     <>
                       <Clock className="w-4 h-4 text-cyan-200" />
-                      <span>提交冷却中 ({cooldownSeconds}s)</span>
+                      <span>冷却中 ({cooldownSeconds}s)</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      <span>提交对等互联申请</span>
+                      <span>提交对等申请</span>
                     </>
                   )}
                 </button>
