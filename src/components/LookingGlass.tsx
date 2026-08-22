@@ -211,7 +211,7 @@ export const LookingGlass: React.FC = () => {
               </span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl">
-              直接从 AkiLab 全球边缘 PoP 节点与 BIRD 核心路由反射器发起实时 Ping、Traceroute 与 BGP 路由表穿透查询。
+              直接从 {networkMeta.networkName} 全球边缘 PoP 节点与 BIRD 核心路由反射器发起实时 Ping、Traceroute 与 BGP 路由表穿透查询。
             </p>
           </div>
 
@@ -357,7 +357,7 @@ export const LookingGlass: React.FC = () => {
                     commandType === 'route'
                       ? '输入 IPv4 / IPv6 前缀或 ASN (如 172.20.0.53, fda2::1, AS4242421234，留空查全表)'
                       : commandType === 'protocols'
-                      ? '输入协议名 (如 dn42_akilab_jp7，留空查询全部会话)'
+                      ? '输入协议名 (如 dn42_peer_jp1，留空查询全部会话)'
                       : commandType === 'status'
                       ? '（无需指定目标，直接运行）'
                       : '输入目标 IP 地址或域名 (如 172.20.0.53, fd42:d42:d42:54::1)'

@@ -88,9 +88,10 @@ export const ConfigGenerator: React.FC = () => {
   const ipv4Validation = useMemo(() => validateDn42Ipv4(peerIpv4, bgpMode === 'mpbgp_enh'), [peerIpv4, bgpMode]);
   const endpointValidation = useMemo(() => validateEndpointHost(peerEndpointHost), [peerEndpointHost]);
 
-  // Interface Name on Peer's Side (Following: dn42_akilab_<节点/对端>)
+  // Interface Name on Peer's Side (Following: dn42_<networkSlug>_<节点/对端>)
+  const networkSlug = (networkMeta.shortName || networkMeta.networkName || 'peer').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) || 'peer';
   const nodeSlug = selectedNode.code.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const clientIfaceName = `dn42_akilab_${nodeSlug}`;
+  const clientIfaceName = `dn42_${networkSlug}_${nodeSlug}`;
 
   // 1. Client Side WireGuard Config
   const generatedClientWgConfig = useMemo(() => {
@@ -141,7 +142,7 @@ PersistentKeepalive = 25
     const referenceComment = '# 仅供参考：请根据你本地 bird.conf 中的模板名称（如 dnpeers）与过滤器定义按需调整\n';
 
     if (bgpMode === 'mpbgp_enh') {
-      return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug} from dnpeers {
+      return `${referenceComment}protocol bgp dn42_${networkSlug}_${nodeSlug} from dnpeers {
     neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
 
     ipv4 {
@@ -157,7 +158,7 @@ PersistentKeepalive = 25
 }
 `.trim();
     } else if (bgpMode === 'dual_stack') {
-      return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug}_v6 from dnpeers {
+      return `${referenceComment}protocol bgp dn42_${networkSlug}_${nodeSlug}_v6 from dnpeers {
     neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
     ipv6 {
         import filter dn42_import_filter;
@@ -165,7 +166,7 @@ PersistentKeepalive = 25
     };
 }
 
-protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
+protocol bgp dn42_${networkSlug}_${nodeSlug}_v4 from dnpeers {
     neighbor ${selectedNode.tunnelIpv4 || '172.20.0.x'} as ${networkMeta.asnNumber};
     ipv4 {
         import filter dn42_import_filter;
@@ -174,7 +175,7 @@ protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
 }
 `.trim();
     } else {
-      return `${referenceComment}protocol bgp dn42_akilab_${nodeSlug}_v6 from dnpeers {
+      return `${referenceComment}protocol bgp dn42_${networkSlug}_${nodeSlug}_v6 from dnpeers {
     neighbor ${selectedNode.tunnelIpv6LLA}%${clientIfaceName} as ${networkMeta.asnNumber};
     ipv6 {
         import filter dn42_import_filter;
@@ -183,7 +184,7 @@ protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
 }
 `.trim();
     }
-  }, [bgpMode, nodeSlug, selectedNode, clientIfaceName, networkMeta.asnNumber]);
+  }, [bgpMode, networkSlug, nodeSlug, selectedNode, clientIfaceName, networkMeta.asnNumber]);
 
   // 3. Immutable Core Parameters Block for Markdown
   const immutableParamsBlock = useMemo(() => {
@@ -211,7 +212,7 @@ protocol bgp dn42_akilab_${nodeSlug}_v4 from dnpeers {
 #### 📡 互联参数清单 (Peering Parameters)
 - **你的 ASN:** ${cleanAsn ? `AS${cleanAsn}` : '（未填）'}
 - **称呼 / 代号:** ${cleanPeerName || '（未填）'}
-- **AkiLab 节点 Endpoint:** \`${selectedNode.endpointDomain}:${finalHostPort}\`
+- **${networkMeta.networkName} 节点 Endpoint:** \`${selectedNode.endpointDomain}:${finalHostPort}\`
 - **你的公网 Endpoint:** \`${fullPeerEndpoint || 'N/A (Behind NAT)'}\` (你的 ListenPort: \`${finalClientPort}\`)
 - **你的 WireGuard 公钥:** \`${peerWgPubKey.trim() || '（未填）'}\`
 - **你的 IPv6 Link-Local (LLA):** \`${effectiveLLA}\`
@@ -442,7 +443,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
   // Quick Demo Data Fill & Reset Helpers
   const handleFillDemoData = () => {
     setPeerAsn('4242429998');
-    setPeerName('Akira');
+    setPeerName('Peer');
     setPeerEndpointHost('peer.example.dn42');
     setPeerWgPubKey('zG8r7QGqR+V9YjK6iFmP7a4b8cD9eF0g1H2i3J4k5L6=');
     setPeerIpv6LLA('fe80::9998');

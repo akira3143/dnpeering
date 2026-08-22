@@ -70,8 +70,8 @@ export const Navbar: React.FC = () => {
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center group-hover:border-cyan-400 transition-all duration-300 shadow-lg shadow-cyan-950/40 overflow-hidden shrink-0">
               <img
-                src={CURRENT_BRAND_LOGO}
-                alt="AkiLab Logo"
+                src={networkMeta.brandLogo || CURRENT_BRAND_LOGO}
+                alt={`${networkMeta.networkName} Logo`}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>

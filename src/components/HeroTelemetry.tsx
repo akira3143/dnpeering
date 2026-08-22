@@ -22,15 +22,19 @@ export const HeroTelemetry: React.FC = () => {
 
           {/* Clean Humble Title */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white font-sans leading-tight">
-            AkiLab Networks <br className="hidden sm:inline" />
+            {networkMeta.networkName} <br className="hidden sm:inline" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400">
-              个人路由实验网络
+              {networkMeta.tagline || 'DN42 个人路由实验网络'}
             </span>
           </h1>
 
           {/* Sincere, Low-profile & Humorous Description */}
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed font-sans">
-            AkiLab 是由 <strong className="text-white font-semibold">AKIRA</strong> 维护的个人非盈利 DN42 实验网络（<code className="font-mono text-cyan-300 font-bold">{networkMeta.asn}</code>），由几台廉价服务器东拼西凑而成。纯粹用于学习与日常折腾（并保留因欠费或维护随时跑路的权利 🤪）。非常欢迎各位同好建立 BGP Peer 互联，一起愉快炸网与交流探索！
+            {networkMeta.description || (
+              <>
+                {networkMeta.networkName} 是由 <strong className="text-white font-semibold">{networkMeta.maintainer || 'DN42 Operator'}</strong> 维护的非盈利 DN42 路由实验网络（<code className="font-mono text-cyan-300 font-bold">{networkMeta.asn}</code>）。欢迎各位网络同好建立 BGP Peer 互联，共同交流与探索！
+              </>
+            )}
           </p>
 
           {/* Action Link */}

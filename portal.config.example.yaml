@@ -9,17 +9,23 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 1. 自治系统 (AS) 基础元数据
+# 1. 自治系统 (AS) 基础元数据与品牌定制
 # ------------------------------------------------------------------------------
 network:
   asn: "AS4242421337"                  # 你的 DN42 自治系统 ASN (如 AS4242423143)
-  network_name: "Example DN42 Network" # 门户品牌名称
-  maintainer: "EXAMPLE-MNT"            # DN42 WHOIS Maintainer 对象
+  network_name: "Example Networks"     # 门户主标题与品牌名称 (如 AkiLab Networks)
+  short_name: "example"                # 简写代号 (用于自动生成配置时的接口与协议前缀，如 dn42_example_jp1)
+  tagline: "个人路由实验网络"            # 首页主标副标题 (如 个人路由实验网络 / Global Routing Research)
+  description: "是由 EXAMPLE-MNT 维护的个人非盈利 DN42 路由实验网络。欢迎各位网络同好建立 BGP Peer 共同交流与探索！" # 站点横幅与页脚描述文案 (留空则自动根据 network_name 与 maintainer 生成)
+  maintainer: "EXAMPLE-MNT"            # DN42 WHOIS Maintainer 对象 (如 AKIRA-MNT)
+  brand_logo: ""                       # 自定义 Logo 图片绝对路径或网络 URL (留空则默认随机展示内置动漫头像)
   ipv4_pool: "172.20.0.0/24"           # 你的 IPv4 广播网段
   ipv6_pool: "fd00:4242:1337::/48"     # 你的 IPv6 ULA 广播网段
   routing_policy: "Open for all DN42 participants / MP-BGP (ENH)"
   bgp_mode: "MP-BGP + Extended Next Hop (ENH)"
   port_formula: "20000 + (ASN % 10000)"
+  whois_url: ""                        # WHOIS 外部直达地址 (留空则自动按 explorer.burble.com 动态生成)
+  looking_glass_url: ""                # 外部 Looking Glass 地址 (留空则平滑滚动到本站内置 LG)
 
 # ------------------------------------------------------------------------------
 # 2. 全球 PoP 节点列表 (支持随时增减修改，前台秒级呈现)

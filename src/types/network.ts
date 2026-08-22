@@ -37,7 +37,11 @@ export interface NetworkMeta {
   asn: string;
   asnNumber: number;
   networkName: string;
+  shortName?: string;
+  tagline?: string;
+  description?: string;
   maintainer: string;
+  brandLogo?: string;
   ipv4Pool: string;
   ipv6Pool: string;
   routingPolicy: string;

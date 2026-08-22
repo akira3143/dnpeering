@@ -17,7 +17,7 @@ import {
 
 export const PeerPage: React.FC = () => {
   const { navigate, queryParams } = useRouter();
-  const { nodes } = useNetwork();
+  const { nodes, networkMeta } = useNetwork();
   const { setTargetNodeId, selectedNode, finalHostPort, finalClientPort } = usePeering();
   const { isAuthenticated, setIsAuthModalOpen } = useAuth();
 
@@ -132,7 +132,7 @@ export const PeerPage: React.FC = () => {
             {/* Host Port Telemetry */}
             <div className="px-3 py-1.5 rounded-xl bg-black/50 border border-cyan-500/20 text-slate-300 flex items-center gap-2 shadow-sm">
               <Server className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-slate-400">AkiLab 监听:</span>
+              <span className="text-slate-400">{networkMeta.networkName || '节点'} 监听:</span>
               <span className="text-cyan-300 font-bold tracking-wide">{finalHostPort}</span>
               <span className="text-[10px] text-cyan-500/80 font-sans">(随 ASN 联动)</span>
             </div>

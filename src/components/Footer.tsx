@@ -87,8 +87,8 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center shadow-lg shadow-cyan-950/40 overflow-hidden shrink-0">
                 <img
-                  src={CURRENT_BRAND_LOGO}
-                  alt="AkiLab Logo"
+                  src={networkMeta.brandLogo || CURRENT_BRAND_LOGO}
+                  alt={`${networkMeta.networkName} Logo`}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -98,7 +98,7 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed font-sans">
-              AkiLab 是由 <strong className="text-slate-300">AKIRA</strong> 维护的个人非盈利 DN42 路由实验网络，由几台廉价服务器东拼西凑而成。欢迎各位网络同好建立 BGP Peer 共同交流！
+              {networkMeta.description || `${networkMeta.networkName} 是由 ${networkMeta.maintainer || 'DN42 Operator'} 维护的非盈利 DN42 路由实验网络。欢迎各位网络同好建立 BGP Peer 共同交流！`}
             </p>
           </div>
 
@@ -208,7 +208,7 @@ export const Footer: React.FC = () => {
         {/* Bottom: Copyright */}
         <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-slate-500 text-[11px]">
           <div>
-            &copy; {new Date().getFullYear()} {networkMeta.networkName} (Maintained by <span className="text-slate-400 font-semibold">AKIRA</span>). Licensed under{' '}
+            &copy; {new Date().getFullYear()} {networkMeta.networkName} (Maintained by <span className="text-slate-400 font-semibold">{networkMeta.maintainer || 'Operator'}</span>). Licensed under{' '}
             <a
               href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
               target="_blank"
