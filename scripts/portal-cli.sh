@@ -41,10 +41,10 @@ case "$1" in
     systemctl status "${SERVICE_NAME}"
     ;;
 
-  r|restart)
-    echo -e "${YELLOW}🔄 正在重启 DN42 Portal 服务...${NC}"
+  r|restart|reload)
+    echo -e "${YELLOW}🔄 正在重启/重载 DN42 Portal 服务...${NC}"
     systemctl restart "${SERVICE_NAME}"
-    echo -e "${GREEN}✓ 重启完成！${NC}"
+    echo -e "${GREEN}✓ 服务重载完成！${NC}"
     ;;
 
   u|update|upgrade)
