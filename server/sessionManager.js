@@ -70,10 +70,10 @@ export function initPortLedgerWithBaselineScan(targetNodeId) {
 // Silently perform baseline scan on initial server startup
 initPortLedgerWithBaselineScan();
 
-// Periodic baseline scan every 5 minutes to continuously capture any newly bound third-party UDP ports
+// Periodic baseline scan every 1 hour (incremental append only:账本优先，仅记录新发现端口，绝不覆盖或删除已有账本记录)
 setInterval(() => {
   initPortLedgerWithBaselineScan();
-}, 5 * 60 * 1000);
+}, 60 * 60 * 1000);
 
 // Helper to safely load JSON
 function loadJson(filePath, defaultValue = {}) {
