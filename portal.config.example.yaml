@@ -1,8 +1,9 @@
 # ==============================================================================
-# 🌐 DN42 Peering Portal - 统一全局配置文件 (portal.config.yaml)
+# 🌐 DN42 Peering Portal - 统一全局配置文件模板 (portal.config.example.yaml)
 #
 # 💡 使用说明：
-# 1. 复制本文件为 portal.config.yaml 即可在生产环境生效。
+# 1. 复制本文件为 portal.config.yaml 即可在生产环境生效：
+#    cp portal.config.example.yaml portal.config.yaml
 # 2. 修改此文件后，全站（节点卡片、配置生成器、Looking Glass 探针）瞬间热重载生效，
 #    彻底无需重新运行 `npm run build`，也无需修改任何 TypeScript 代码！
 # 3. 亦可在 .env 中指定 REMOTE_CONFIG_URL=https://... 直接外链远程 YAML 自动定时拉取。
@@ -19,14 +20,14 @@ network:
   description: "是由 EXAMPLE-MNT 维护的个人非盈利 DN42 路由实验网络。欢迎各位网络同好建立 BGP Peer 共同交流与探索！" # 站点横幅与页脚描述文案 (留空则自动根据 network_name 与 maintainer 生成)
   maintainer: "EXAMPLE-MNT"            # DN42 WHOIS Maintainer 对象 (如 AKIRA-MNT)
   brand_logo: ""                       # 自定义 Logo 图片绝对路径或网络 URL (留空则默认随机展示内置动漫头像)
+  master_url: "https://dn42.example.com" # 主控面板公网通信访问地址 (用于一键生成远端探针反向连接命令)
   ipv4_pool: "172.20.0.0/24"           # 你的 IPv4 广播网段
   ipv6_pool: "fd00:4242:1337::/48"     # 你的 IPv6 ULA 广播网段
   routing_policy: "Open for all DN42 participants / MP-BGP (ENH)"
   bgp_mode: "MP-BGP + Extended Next Hop (ENH)"
-  port_formula: "20000 + (ASN % 10000)"
+  port_formula: "20000 + (ASN % 10000)" # 端口计算规则描述 (如 20000 + (ASN % 10000))
   whois_url: ""                        # WHOIS 外部直达地址 (留空则自动按 explorer.burble.com 动态生成)
   looking_glass_url: ""                # 外部 Looking Glass 地址 (留空则平滑滚动到本站内置 LG)
-  master_url: ""                       # 主控面板公网/内网通信地址 (如 https://dn42.akilab.meme 或 http://198.51.100.1:4242，用于探针一键安装脚本)
 
 # ------------------------------------------------------------------------------
 # 2. 全球 PoP 节点列表 (支持随时增减修改，前台秒级呈现)
@@ -34,24 +35,28 @@ network:
 nodes:
   - id: "jp07"                         # 节点唯一代号 (纯小写字母数字)
     code: "JP-1"                       # 前台徽章代号
-    name: "Tokyo 01 (Japan Hub)"       # 节点名称
+    name: "Tokyo 01 (Japan Core Hub)"  # 节点名称
     flag: "🇯🇵"                         # 国家/地区国旗 Emoji
     city: "Tokyo"                      # 所在城市
     country: "Japan"                   # 所在国家
     region: "apac"                     # 地区分类: apac (亚太) / na (北美) / eu (欧洲)
+    coordinates: [35.6762, 139.6503]   # 经纬度坐标 [纬度, 经度] (用于地图与拓扑呈现)
+    status: "active"                   # 节点状态: active (正常在线) / maintenance (维护中) / planned (建设中)
+    isp: "Example Datacenter"          # 机房提供商或数据中心名称
     endpoint: "jp1.example.dn42"       # 节点的 WireGuard 公网域名或公网 IP
     wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_111111=" # 节点的 WG 公钥
     ipv4: "172.20.0.1"                 # 节点在隧道内的 IPv4
     ipv6_ula: "fd00:4242:1337::1"      # 节点在隧道内的 IPv6 ULA
     ipv6_lla: "fe80::1337"             # 节点链路本地地址 (Link-Local)
     mtu: 1420                          # WireGuard 推荐 MTU
-    features:                          # 节点特色特性标签
+    features:                          # 节点特色特性标签 (列表)
       - "★ Core Hub"
       - "MP-BGP"
       - "ENH"
       - "Extended Next Hop"
     notes: "东亚互联核心枢纽，推荐日本、香港、台湾等东亚地区接入。"
-    lg_proxy_url: "http://127.0.0.1:5000" # 该节点 bird-lgproxy 探针直达地址 (用于 Looking Glass)
+    occupied_ports: [20001, 20002]     # 预设或静态占用的 WireGuard 端口 (可选，系统亦会自动探测)
+    lg_proxy_url: ""                   # 可选: 传统 bird-lgproxy 探针直达地址 (留空则默认走反向 WebSocket 长连接)
 
   - id: "us01"
     code: "US-1"
@@ -60,6 +65,9 @@ nodes:
     city: "San Jose"
     country: "United States"
     region: "na"
+    coordinates: [37.3382, -121.8863]
+    status: "active"
+    isp: "Example US Datacenter"
     endpoint: "us1.example.dn42"
     wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_222222="
     ipv4: "172.20.0.2"
@@ -71,16 +79,20 @@ nodes:
       - "ENH"
       - "Trans-Pacific"
     notes: "美洲及美西互联推荐节点，直连跨太平洋骨干。"
-    lg_proxy_url: "http://172.20.14.2:5000"
+    occupied_ports: []
+    lg_proxy_url: ""
 
-  - id: "de02"
-    code: "DE-1"
+  - id: "de01"
+    code: "EU-1"
     name: "Frankfurt 01 (Europe Hub)"
     flag: "🇩🇪"
     city: "Frankfurt"
     country: "Germany"
     region: "eu"
-    endpoint: "de1.example.dn42"
+    coordinates: [50.1109, 8.6821]
+    status: "active"
+    isp: "Example EU Datacenter"
+    endpoint: "eu1.example.dn42"
     wg_pubkey: "EXAMPLE_WG_PUBKEY_REPLACE_WITH_YOUR_KEY_333333="
     ipv4: "172.20.0.3"
     ipv6_ula: "fd00:4242:1337::3"
@@ -89,9 +101,10 @@ nodes:
     features:
       - "MP-BGP"
       - "ENH"
-      - "DE-CIX Peering"
-    notes: "欧洲地区核心互联节点。"
-    lg_proxy_url: "http://172.20.14.3:5000"
+      - "DE-CIX Link"
+    notes: "欧洲骨干互联节点，推荐欧洲及中东地区接入。"
+    occupied_ports: []
+    lg_proxy_url: ""
 
 # ------------------------------------------------------------------------------
 # 3. 前台公开联络方式矩阵
@@ -100,18 +113,39 @@ contacts:
   - platform: "Telegram"
     handle: "@example_dn42"
     link: "https://t.me/example_dn42"
-    type: "telegram"
+    type: "telegram"                   # 图标类型: telegram / email / matrix / discord / github / other
     response_time: "< 2 小时 (推荐)"
-    preferred: true
+    preferred: true                    # 是否高亮优先推荐
 
   - platform: "Email"
     handle: "dn42@example.com"
     link: "mailto:dn42@example.com"
     type: "email"
     response_time: "< 12 小时"
+    preferred: false
 
 # ------------------------------------------------------------------------------
-# 4. 服务端基础参数 (可选，留空则自动读取 .env)
+# 4. BGP Community 路由策略规则表 (公开在首页策略区域)
+# ------------------------------------------------------------------------------
+communities:
+  - community: "64511:21"
+    action: "NO_EXPORT_UPSTREAM"
+    description: "不向任何上游 (Upstream) Transit 提供商转发该前缀"
+    category: "export"
+
+  - community: "64511:22"
+    action: "NO_EXPORT_PEERS"
+    description: "仅保留在本地 AS 内部，不向任何外部 BGP Peers 广播"
+    category: "export"
+
+  - community: "64511:100"
+    action: "SET_LOCAL_PREF_100"
+    description: "设置 Local Preference 为 100 (默认标准优先级)"
+    category: "pref"
+
+# ------------------------------------------------------------------------------
+# 5. 服务端基础参数 (可选，留空则自动读取 .env)
 # ------------------------------------------------------------------------------
 server:
-  port: 3143
+  port: 4242
+
