@@ -34,10 +34,13 @@ export function triggerBackgroundSync() {
 }
 
 // Run periodic sync every 3-6 hours (Default: 4h)
-setInterval(() => {
+const registryTimer = setInterval(() => {
   console.log(`🔄 [DN42 Registry] Starting periodic ${SYNC_INTERVAL_HOURS}-hour sync...`);
   triggerBackgroundSync();
 }, SYNC_INTERVAL_MS);
+if (typeof registryTimer?.unref === 'function') {
+  registryTimer.unref();
+}
 
 /**
  * Parses simple RPSL format file (DN42 registry object) into a key-value dictionary

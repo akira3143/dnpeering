@@ -71,7 +71,7 @@ export function scanBaselineExistingPorts() {
       if (!trimmed || trimmed.startsWith('Netid')) continue;
 
       // Extract Port from Local Address:Port (e.g. 0.0.0.0:23999, :::20207, [::]:50001, *:443)
-      const portMatch = trimmed.match(/(?:[0-9a-fA-F:.]+|\*):(\d{1,5})\s+/);
+      const portMatch = trimmed.match(/(?:[0-9a-fA-F:.[\]]+|\*):(\d{1,5})\s+/);
       if (!portMatch || !portMatch[1]) continue;
 
       const port = parseInt(portMatch[1], 10);

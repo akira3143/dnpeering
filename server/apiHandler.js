@@ -47,6 +47,8 @@ export async function handlePeeringSubmission(body, clientIp, authHeader) {
     };
   }
 
+  const cleanAsn = String(peerAsn).replace(/\D/g, '');
+
   // 🔒 Authentication Check:
   // If logged in, verify identity matches the submitted ASN (admins can submit for any ASN)
   const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();

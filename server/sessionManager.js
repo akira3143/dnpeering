@@ -365,16 +365,20 @@ export function savePeeringSession(payload, clientIp) {
     ? Number(payload.hostPort)
     : 20000 + (safeAsn % 10000);
 
-  // If the requested port is already occupied/locked by a DIFFERENT ASN/session, automatically step up to avoid conflict!
+  // If the requested port is already occupied/locked by a DIFFERENT ASN/session or baseline system interface, automatically step up!
   let allocatedPort = requestedPort;
   let attempts = 0;
-  while (
-    nodePorts[allocatedPort] &&
-    nodePorts[allocatedPort].asn &&
-    nodePorts[allocatedPort].asn !== cleanAsn &&
-    (!existingSession || nodePorts[allocatedPort].sessionId !== existingSession.id) &&
-    attempts < 50
-  ) {
+
+  const isPortOccupiedByOther = (p) => {
+    const entry = nodePorts[p];
+    if (!entry) return false;
+    if (existingSession && (entry.sessionId === existingSession.id || (entry.asn && entry.asn === cleanAsn))) {
+      return false;
+    }
+    return true;
+  };
+
+  while (isPortOccupiedByOther(allocatedPort) && attempts < 50) {
     allocatedPort += 10000;
     if (allocatedPort > 65535) {
       allocatedPort = 20000 + ((allocatedPort + 1) % 10000);

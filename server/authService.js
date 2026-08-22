@@ -21,7 +21,7 @@ const activeChallenges = new Map();
 const activeEmailOtps = new Map();
 
 // Periodic cleanup of expired challenges and OTPs (every 60 seconds)
-setInterval(() => {
+const authCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, val] of activeChallenges) {
     if (now > val.expiresAt) activeChallenges.delete(key);
@@ -30,6 +30,9 @@ setInterval(() => {
     if (now > val.expiresAt) activeEmailOtps.delete(key);
   }
 }, 60 * 1000);
+if (typeof authCleanupTimer?.unref === 'function') {
+  authCleanupTimer.unref();
+}
 
 /**
  * Creates a lightweight HMAC SHA-256 JWT Token with configurable TTL

@@ -11,7 +11,7 @@ const MAX_REQUESTS_PER_WINDOW = 2; // Max 2 requests per window
 const MIN_INTERVAL_MS = 30 * 1000; // Minimum 30 seconds between requests
 
 // Periodic cleanup of stale entries every 10 minutes
-setInterval(() => {
+const rateLimitTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, timestamps] of ipRequests.entries()) {
     const valid = timestamps.filter(t => now - t < WINDOW_MS);
@@ -24,6 +24,9 @@ setInterval(() => {
     else asnRequests.set(key, valid);
   }
 }, 10 * 60 * 1000);
+if (typeof rateLimitTimer?.unref === 'function') {
+  rateLimitTimer.unref();
+}
 
 /**
  * Checks if a request from an IP and ASN is allowed
