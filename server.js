@@ -21,7 +21,10 @@ import {
   handleLookingGlassQuery,
   handleGetNetworkMeta,
   handleReportProbePorts,
+  handleGetProbeStatus,
+  handleGetProbeInstallCommand,
 } from './server/apiHandler.js';
+import { initProbeWsServer } from './server/probeWsServer.js';
 import { checkRateLimit, recordSubmission, checkLgRateLimit, recordLgQuery } from './server/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -206,7 +209,19 @@ const server = http.createServer(async (req, res) => {
     return sendJson(result.status, result.data);
   }
 
-  // 18. Health check route
+  // 18. API Route: GET /api/probe/status (Live WebSocket Probe Statuses)
+  if (url.pathname === '/api/probe/status' && req.method === 'GET') {
+    const result = handleGetProbeStatus();
+    return sendJson(result.status, result.data);
+  }
+
+  // 19. API Route: GET /api/probe/install-command (Auto domain adaptive one-click command generator)
+  if (url.pathname === '/api/probe/install-command' && req.method === 'GET') {
+    const result = handleGetProbeInstallCommand(url, req.headers);
+    return sendJson(result.status, result.data);
+  }
+
+  // 20. Health check route
   if (url.pathname === '/health' || url.pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'healthy', time: new Date().toISOString() }));
@@ -246,6 +261,9 @@ const server = http.createServer(async (req, res) => {
     });
   });
 });
+
+// Initialize WebSocket Server for reverse probe agents
+initProbeWsServer(server);
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 AkiLab DN42 Portal Server running on http://0.0.0.0:${PORT}`);

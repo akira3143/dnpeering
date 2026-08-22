@@ -213,25 +213,21 @@ case "$1" in
             console.log('  🌐 节点专属探针一键安装指令 (\x1b[32m' + matched.flag + ' ' + matched.name + '\x1b[0m)');
             console.log('\x1b[36m==================================================================\x1b[0m');
             console.log('\x1b[33m👉 请直接复制以下单行命令，粘贴到目标 VPS 终端回车执行即可：\x1b[0m\n');
-            const isLocal = matched.id === 'jp07' || matched.id.includes('local') || matched.id.includes('hub');
-            const listenIp = isLocal ? '127.0.0.1:5000' : '0.0.0.0:5000';
-            const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen ' + listenIp + ' --token \"' + token + '\" --core-url \"' + coreUrl + '\" --node-id \"' + matched.id + '\"';
+            const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master \"' + coreUrl + '\" --token \"' + token + '\" --node-id \"' + matched.id + '\"';
             console.log('\x1b[1m\x1b[32m' + cmd + '\x1b[0m\n');
             process.exit(0);
           }
         }
 
         console.log('\n\x1b[36m==================================================================\x1b[0m');
-        console.log('  🦅 AkiLab DN42 - 探针套件与远端一键安装指令生成器 (Like Nezha)');
+        console.log('  🦅 AkiLab DN42 - 反向 WebSocket 探针极速安装生成器 (Like Nezha)');
         console.log('\x1b[36m==================================================================\x1b[0m');
-        console.log('  主控端 Core URL: \x1b[32m' + coreUrl + '\x1b[0m (用于远端节点自动回传已占用端口与状态)');
-        console.log('  通信鉴权 Token : \x1b[33m' + token + '\x1b[0m');
+        console.log('  主控端 Master 地址 : \x1b[32m' + coreUrl + '\x1b[0m');
+        console.log('  全局通信鉴权 Token : \x1b[33m' + token + '\x1b[0m');
         console.log('\n\x1b[36m👉 各节点专属一键无人值守安装指令（复制并在目标机器回车执行）：\x1b[0m\n');
 
         nodes.forEach((n, idx) => {
-          const isLocal = idx === 0 || n.id === 'jp07';
-          const listenIp = isLocal ? '127.0.0.1:5000' : '0.0.0.0:5000';
-          const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --listen ' + listenIp + ' --token \"' + token + '\" --core-url \"' + coreUrl + '\" --node-id \"' + n.id + '\"';
+          const cmd = 'curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master \"' + coreUrl + '\" --token \"' + token + '\" --node-id \"' + n.id + '\"';
           
           console.log('\x1b[36m[' + (idx + 1) + '] ' + (n.flag || '🌐') + ' ' + n.code + ' - ' + n.name + ' (' + n.id + ')\x1b[0m');
           console.log('    \x1b[32m' + cmd + '\x1b[0m\n');

@@ -451,3 +451,62 @@ export function handleReportProbePorts(body, authHeader) {
   return { status: 200, data: { success: true, ...result } };
 }
 
+/**
+ * Handles GET /api/probe/status
+ * Returns live online status and latency for all nodes
+ */
+export function handleGetProbeStatus() {
+  try {
+    const { getConnectedNodesStatus } = awaitImportProbeWs();
+    const probeMap = getConnectedNodesStatus();
+    return {
+      status: 200,
+      data: {
+        success: true,
+        probes: probeMap,
+      },
+    };
+  } catch (err) {
+    return {
+      status: 200,
+      data: {
+        success: true,
+        probes: {},
+      },
+    };
+  }
+}
+
+// Lazy helper to avoid circular reference
+let _probeWs = null;
+async function awaitImportProbeWs() {
+  if (!_probeWs) {
+    _probeWs = await import('./probeWsServer.js');
+  }
+  return _probeWs;
+}
+
+/**
+ * Handles GET /api/probe/install-command
+ * Dynamically computes one-click curl install command using request's Host / X-Forwarded-Host
+ */
+export function handleGetProbeInstallCommand(reqUrl, reqHeaders) {
+  const nodeId = (reqUrl.searchParams.get('nodeId') || 'jp07').toLowerCase().trim();
+  const host = reqHeaders['x-forwarded-host'] || reqHeaders['host'] || 'localhost:4242';
+  const proto = reqHeaders['x-forwarded-proto'] || (reqHeaders['referer'] && reqHeaders['referer'].startsWith('https') ? 'https' : 'http');
+  const masterUrl = `${proto}://${host}`;
+  const token = process.env.PROBE_AUTH_TOKEN || process.env.BIRD_LG_TOKEN || '';
+
+  const command = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${masterUrl}" --token "${token}" --node-id "${nodeId}"`;
+
+  return {
+    status: 200,
+    data: {
+      success: true,
+      nodeId,
+      masterUrl,
+      command,
+    },
+  };
+}
+

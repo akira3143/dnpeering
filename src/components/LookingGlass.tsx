@@ -40,6 +40,41 @@ export const LookingGlass: React.FC = () => {
   const [pingCount, setPingCount] = useState<number>(4);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [historyResults, setHistoryResults] = useState<LgQueryResponse | null>(null);
+  const [probeStatuses, setProbeStatuses] = useState<Record<string, { online: boolean; latencyMs: number; lastSeen: number }>>({});
+
+  // Poll probe statuses every 8 seconds
+  useEffect(() => {
+    const fetchProbeStatuses = async () => {
+      try {
+        const res = await fetch('/api/probe/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.probes) {
+            setProbeStatuses(data.probes);
+          }
+        }
+      } catch {}
+    };
+    fetchProbeStatuses();
+    const interval = setInterval(fetchProbeStatuses, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCopyProbeInstallCommand = async (nodeId: string) => {
+    try {
+      const res = await fetch(`/api/probe/install-command?nodeId=${nodeId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.command) {
+          copyToClipboard(data.command, `[${nodeId.toUpperCase()}] 探针一键安装指令`);
+          return;
+        }
+      }
+    } catch {}
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4242';
+    const cmd = `curl -sSL https://raw.githubusercontent.com/akira3143/dnpeering/main/scripts/install-probe.sh | sudo bash -s -- --master "${origin}" --token "<YOUR_TOKEN>" --node-id "${nodeId}"`;
+    copyToClipboard(cmd, `[${nodeId.toUpperCase()}] 探针安装指令`);
+  };
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const autoRunTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -234,6 +269,8 @@ export const LookingGlass: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {nodes.map((node) => {
                 const isSelected = node.id === selectedNodeId;
+                const isOnline = Boolean(probeStatuses[node.id]?.online || node.id === 'jp07');
+                const latency = probeStatuses[node.id]?.latencyMs;
                 return (
                   <button
                     key={node.id}
@@ -257,8 +294,15 @@ export const LookingGlass: React.FC = () => {
                           <span className="text-slate-500">&middot;</span>
                           <span className="text-slate-300 font-normal">{node.city}</span>
                         </div>
-                        <div className="text-[11px] font-mono text-cyan-300/80 mt-0.5">
-                          {node.endpointDomain}
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            isOnline
+                              ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                              : 'bg-slate-500'
+                          }`}></span>
+                          <span className={`text-[10px] font-mono ${isOnline ? 'text-emerald-300 font-medium' : 'text-slate-400'}`}>
+                            {isOnline ? (latency ? `${latency}ms 在线` : '🟢 在线') : '离线 (未部署)'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -395,6 +439,22 @@ export const LookingGlass: React.FC = () => {
                 )}
               </button>
             </div>
+
+            {!probeStatuses[selectedNodeId]?.online && selectedNodeId !== 'jp07' && (
+              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-amber-200">
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>当前节点探针处于离线状态 (未安装或长连接未建立)。</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopyProbeInstallCommand(selectedNodeId)}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 shrink-0"
+                >
+                  <span>📋 复制该节点一键安装指令</span>
+                </button>
+              </div>
+            )}
 
           </div>
 

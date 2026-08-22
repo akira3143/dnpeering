@@ -7,6 +7,7 @@
 import { execFileSync } from 'child_process';
 import './env.js';
 import { getActiveConfig } from './configLoader.js';
+import { isNodeConnected, dispatchLgCommandOverWs } from './probeWsServer.js';
 
 // Parse per-node endpoints from environment
 function getNodeEndpointsMap() {
@@ -194,7 +195,22 @@ export async function executeLgCommand({ nodeId = 'jp07', commandType = 'route',
     }
   }
 
-  // Attempt live query to bird-lgproxy
+  // 1. 优先通过 WebSocket 反向长连接下发指令 (哪吒模式，NAT 穿透，毫秒级回传)
+  if (isNodeConnected(cleanNode)) {
+    const wsResult = await dispatchLgCommandOverWs(cleanNode, commandType, cleanTarget, options);
+    return {
+      success: wsResult.success,
+      isLive: true,
+      isMock: false,
+      nodeId: cleanNode,
+      command: birdCommand,
+      output: wsResult.output,
+      durationMs: wsResult.durationMs,
+      error: wsResult.error,
+    };
+  }
+
+  // 2. 备用方式：通过 HTTP 访问探针 (兼容旧版 bird-lgproxy)
   let fetchError = null;
   try {
     const timeoutMs = isSystemCommand ? 12000 : 5000;
