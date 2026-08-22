@@ -318,7 +318,7 @@ function normalizeConfig(raw) {
         features: Array.isArray(node.features) ? node.features : ['MP-BGP', 'ENH'],
         notes: node.notes || '',
         occupiedPorts: Array.isArray(node.occupied_ports) ? node.occupied_ports : [],
-        lgProxyUrl: node.lg_proxy_url || node.lgProxyUrl || (idx === 0 ? 'http://127.0.0.1:5000' : ''),
+        lgProxyUrl: node.lg_proxy_url || node.lgProxyUrl || (idx === 0 ? 'http://127.0.0.1:5000' : (node.ipv4 ? `http://${node.ipv4}:5000` : '')),
       };
     });
   }
