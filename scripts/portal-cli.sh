@@ -193,9 +193,11 @@ case "$1" in
         const network = config.network || {};
 
         if (!coreUrl) {
-          // 尝试查找第一个节点 (如本地主节点) 的内网 IPv4 或域名
+          // 优先使用主节点的公网域名/公网 IP (确保无 iBGP 时公网也能 100% 互通)
           const hubNode = nodes.find(n => n.features && n.features.some(f => f.includes('Hub') || f.includes('Core'))) || nodes[0];
-          if (hubNode && hubNode.ipv4) {
+          if (hubNode && hubNode.endpoint) {
+            coreUrl = 'http://' + hubNode.endpoint + ':4242';
+          } else if (hubNode && hubNode.ipv4) {
             coreUrl = 'http://' + hubNode.ipv4 + ':4242';
           } else {
             coreUrl = 'http://127.0.0.1:4242';
