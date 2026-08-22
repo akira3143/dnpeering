@@ -47,20 +47,21 @@ export async function handlePeeringSubmission(body, clientIp, authHeader) {
     };
   }
 
-  const cleanAsn = String(peerAsn || '').replace(/\D/g, '');
-
-  // 🔒 Strict Authentication Guard: Must be authenticated via JWT matching the submitted ASN
+  // 🔒 Authentication Check:
+  // If logged in, verify identity matches the submitted ASN (admins can submit for any ASN)
   const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
   const authUser = verifyJwt(token);
 
-  if (!authUser || (authUser.cleanAsn !== cleanAsn && authUser.asn !== `AS${cleanAsn}`)) {
-    return {
-      status: 401,
-      data: {
-        success: false,
-        error: '安全拦截：提交对等互联申请必须先完成 DN42 Registry 身份验真或密码登录！',
-      },
-    };
+  if (authUser && !authUser.isAdmin) {
+    if (authUser.cleanAsn !== cleanAsn && authUser.asn !== `AS${cleanAsn}`) {
+      return {
+        status: 403,
+        data: {
+          success: false,
+          error: `登录身份 (AS${authUser.cleanAsn}) 与当前申请的 ASN (AS${cleanAsn}) 不一致！`,
+        },
+      };
+    }
   }
 
   if (!peerWgPubKey || !String(peerWgPubKey).trim()) {
