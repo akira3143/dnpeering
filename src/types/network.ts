@@ -4,7 +4,7 @@ export type NodeStatusType = 'active' | 'limited' | 'maintenance' | 'direct_ix';
 export interface NodeInfo {
   id: string;
   name: string;
-  code: string;
+  code?: string;
   flag: string;
   city: string;
   country: string;

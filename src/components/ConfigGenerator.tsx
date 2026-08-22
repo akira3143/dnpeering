@@ -90,7 +90,7 @@ export const ConfigGenerator: React.FC = () => {
 
   // Interface Name on Peer's Side (Following: dn42_<networkSlug>_<节点/对端>)
   const networkSlug = (networkMeta.shortName || networkMeta.networkName || 'peer').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) || 'peer';
-  const nodeSlug = selectedNode.code.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const nodeSlug = (selectedNode.id || selectedNode.code || 'node').toLowerCase().replace(/[^a-z0-9]/g, '');
   const clientIfaceName = `dn42_${networkSlug}_${nodeSlug}`;
 
   // 1. Client Side WireGuard Config
@@ -207,7 +207,7 @@ protocol bgp dn42_${networkSlug}_${nodeSlug}_v4 from dnpeers {
 
 > **申请人 ASN:** ${cleanAsn ? `AS${cleanAsn}` : '（未填）'}
 > **称呼 / 标识 (Name):** ${cleanPeerName || '（未填）'}
-> **目标接入节点:** ${selectedNode.flag} ${selectedNode.name} (${selectedNode.code})
+> **目标接入节点:** ${selectedNode.flag} ${selectedNode.name} (${selectedNode.id})
 
 #### 📡 互联参数清单 (Peering Parameters)
 - **你的 ASN:** ${cleanAsn ? `AS${cleanAsn}` : '（未填）'}
@@ -589,7 +589,7 @@ ${ulaLine}${ipv4Line}- **BGP 协议模式:** ${protocolDesc}
                     >
                       {nodes.map((node) => (
                         <option key={node.id} value={node.id} className="bg-[#0c1424] text-slate-100 py-2">
-                          {node.flag} {node.code} &middot; {node.name} ({node.city})
+                          {node.flag} {node.id} &middot; {node.name} ({node.city})
                         </option>
                       ))}
                     </select>

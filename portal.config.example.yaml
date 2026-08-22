@@ -33,9 +33,8 @@ network:
 # 2. 全球 PoP 节点列表 (支持随时增减修改，前台秒级呈现)
 # ------------------------------------------------------------------------------
 nodes:
-  - id: "jp07"                         # 节点唯一代号 (纯小写字母数字)
-    code: "JP-1"                       # 前台徽章代号
-    name: "Tokyo 01 (Japan Core Hub)"  # 节点名称
+  - id: "JP-1"                         # 节点唯一标识 ID (如 JP-1, US-1, tokyo-01)
+    name: "Tokyo 01 (Japan Core Hub)"  # 节点完整名称与描述
     flag: "🇯🇵"                         # 国家/地区国旗 Emoji
     city: "Tokyo"                      # 所在城市
     country: "Japan"                   # 所在国家
@@ -58,8 +57,7 @@ nodes:
     occupied_ports: [20001, 20002]     # 预设或静态占用的 WireGuard 端口 (可选，系统亦会自动探测)
     lg_proxy_url: "http://127.0.0.1:5000" # 节点的 bird-lgproxy 探针地址 (留空则默认按 http://{endpoint}:5000 探测)
 
-  - id: "us01"
-    code: "US-1"
+  - id: "US-1"
     name: "Silicon Valley 01 (US West)"
     flag: "🇺🇸"
     city: "San Jose"
@@ -82,8 +80,7 @@ nodes:
     occupied_ports: []
     lg_proxy_url: ""
 
-  - id: "de01"
-    code: "EU-1"
+  - id: "EU-1"
     name: "Frankfurt 01 (Europe Hub)"
     flag: "🇩🇪"
     city: "Frankfurt"

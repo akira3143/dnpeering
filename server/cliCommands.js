@@ -91,9 +91,9 @@ export async function handleCliProbe(targetNodeArg = '') {
     const proxyToken = process.env.LG_PROXY_TOKEN || '';
 
     console.log('\n\x1b[36m==================================================================\x1b[0m');
-    console.log('  🦅 节点官方 bird-lgproxy 探针一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.code + ' - ' + matched.name + '\x1b[0m)');
+    console.log('  🦅 节点官方 bird-lgproxy 探针一键安装指令 (' + (matched.flag || '🌐') + ' \x1b[32m' + matched.id + ' · ' + matched.name + '\x1b[0m)');
     console.log('\x1b[36m==================================================================\x1b[0m');
-    console.log('  节点代号 ID   : \x1b[33m' + matched.id + '\x1b[0m (Code: ' + matched.code + ')');
+    console.log('  节点唯一 ID   : \x1b[33m' + matched.id + '\x1b[0m');
     console.log('  探针运行状态 : ' + (isOnline ? ('\x1b[32m🟢 在线' + (isLocal ? ' (本地主节点)' : ' (' + (latency || 1) + 'ms)') + '\x1b[0m') : '\x1b[90m⚪ 离线 (未部署或未放行 ' + proxyPort + ' 端口)\x1b[0m'));
     console.log('  公网探测地址 : \x1b[32m' + (matched.lgProxyUrl || ('http://' + (matched.endpoint || matched.id) + ':' + proxyPort)) + '\x1b[0m');
     if (proxyToken) {
@@ -124,7 +124,7 @@ export async function handleCliProbe(targetNodeArg = '') {
       return;
     } else {
       console.log('\n\x1b[31m❌ 未找到代号为 [' + targetArg + '] 的节点。\x1b[0m');
-      console.log('当前可用的节点代号 ID 如下: ' + nodes.map((n) => '\x1b[33m' + n.id + '\x1b[0m (' + n.code + ')').join(', '));
+      console.log('当前可用的节点唯一 ID 如下: ' + nodes.map((n) => '\x1b[33m' + n.id + '\x1b[0m (' + n.name + ')').join(', '));
       console.log('');
     }
   }
@@ -137,7 +137,7 @@ export async function handleCliProbe(targetNodeArg = '') {
   console.log('  通信鉴权 Token 模式: \x1b[33mHMAC-SHA256 动态派生\x1b[0m (每个节点拥有独立唯一密钥)');
   console.log('\n\x1b[36m📡 全网 PoP 节点在线状态与代号清单 (Node List)：\x1b[0m');
   console.log('\x1b[90m──────────────────────────────────────────────────────────────────\x1b[0m');
-  console.log('  序号 | 节点代号 (ID / Code) | 节点名称与地区              | 探针在线状态');
+  console.log('  序号 | 节点唯一 ID (ID)   | 节点名称与地区              | 探针在线状态');
   console.log('\x1b[90m──────────────────────────────────────────────────────────────────\x1b[0m');
 
   nodes.forEach((n, idx) => {
@@ -146,7 +146,7 @@ export async function handleCliProbe(targetNodeArg = '') {
     const isOnline = isLocal || Boolean(probe && probe.online);
     const latency = probe?.latencyMs;
 
-    const idPad = (n.id + '  /  ' + n.code).padEnd(20);
+    const idPad = String(n.id).padEnd(18);
     const namePad = ((n.flag || '🌐') + ' ' + n.name).padEnd(26);
     const statusText = isOnline
       ? (isLocal ? '\x1b[32m🟢 在线 (本地主节点)\x1b[0m' : (`\x1b[32m🟢 在线 (${latency || 1}ms)\x1b[0m`))
@@ -200,7 +200,7 @@ export async function handleCliPorts() {
 
   nodes.forEach((n) => {
     const ports = getOccupiedPortsForNode(n.id);
-    console.log('\n\x1b[33m[' + (n.flag || '🌐') + ' ' + n.code + ' - ' + n.name + ' (' + n.id + ')]\x1b[0m 已占用端口数: \x1b[32m' + ports.length + '\x1b[0m');
+    console.log('\n\x1b[33m[' + (n.flag || '🌐') + ' ' + n.id + ' · ' + n.name + ']\x1b[0m 已占用端口数: \x1b[32m' + ports.length + '\x1b[0m');
     if (ports.length === 0) {
       console.log('  \x1b[90m(当前暂无占用端口)\x1b[0m');
     } else {

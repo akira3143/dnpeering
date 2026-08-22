@@ -83,7 +83,7 @@ export const PortCalculator: React.FC = () => {
                       >
                         {nodes.map((n) => (
                           <option key={n.id} value={n.id} className="bg-[#0c1424] text-slate-100 py-2">
-                            {n.code} &middot; {n.city}
+                            {n.id} &middot; {n.city}
                           </option>
                         ))}
                       </select>
@@ -155,7 +155,7 @@ export const PortCalculator: React.FC = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-xs font-sans text-slate-400">
-                      AkiLab 节点分配端口 ({selectedNode.code})
+                      AkiLab 节点分配端口 ({selectedNode.id})
                     </div>
                     <div className="text-2xl font-extrabold font-mono mt-1">
                       {!hostPortInfo.isAvailable ? (

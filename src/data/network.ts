@@ -192,8 +192,7 @@ export function calculatePeerListenPort(_nodeId?: string, forceFallback: boolean
  */
 export const NETWORK_NODES: NodeInfo[] = [
   {
-    id: 'jp07',
-    code: 'JP-1',
+    id: 'JP-1',
     name: 'Tokyo 01 (Japan Hub)',
     flag: '🇯🇵',
     city: 'Tokyo',
@@ -213,8 +212,7 @@ export const NETWORK_NODES: NodeInfo[] = [
     occupiedPorts: [],
   },
   {
-    id: 'us01',
-    code: 'US-1',
+    id: 'US-1',
     name: 'Silicon Valley 01 (US West)',
     flag: '🇺🇸',
     city: 'San Jose',
@@ -234,8 +232,7 @@ export const NETWORK_NODES: NodeInfo[] = [
     occupiedPorts: [],
   },
   {
-    id: 'de02',
-    code: 'DE-1',
+    id: 'DE-1',
     name: 'Frankfurt 01 (Europe Hub)',
     flag: '🇩🇪',
     city: 'Frankfurt',

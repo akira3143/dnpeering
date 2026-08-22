@@ -25,9 +25,9 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, onSelectForPeering }) 
         {/* Top Meta: Code Pill + Region & City + Status */}
         <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
-            <CountryFlag flag={node.flag} code={node.code} country={node.country} className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm" />
+            <CountryFlag flag={node.flag} code={node.id} country={node.country} className="w-5 h-3.5 object-cover rounded-[2px] shadow-sm" />
             <span className="font-mono text-sm font-bold text-white tracking-wide">
-              {node.code}
+              {node.id}
             </span>
             <span className="text-xs text-slate-400 font-sans">
               {node.city}

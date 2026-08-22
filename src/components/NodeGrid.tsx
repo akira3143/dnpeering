@@ -97,7 +97,7 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                       <div className="flex items-center gap-3.5 pl-2 min-w-0">
                         <CountryFlag
                           flag={node.flag}
-                          code={node.code}
+                          code={node.id}
                           country={node.country}
                           className="w-7 h-5 object-cover rounded-[3px] shadow-md border border-white/10 shrink-0"
                         />
@@ -106,7 +106,7 @@ export const NodeGrid: React.FC<NodeGridProps> = ({ onSelectNode }) => {
                             {node.name}
                           </div>
                           <div className="text-[11px] font-mono text-slate-500 mt-1 flex items-center gap-1.5 truncate">
-                            <span className="text-cyan-500 font-medium">{node.code}</span>
+                            <span className="text-cyan-500 font-medium">{node.id}</span>
                             <span className="text-slate-700">|</span>
                             <span>{node.city}</span>
                             <span className="text-slate-700">|</span>

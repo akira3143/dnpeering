@@ -298,11 +298,11 @@ function normalizeConfig(raw) {
   // Nodes list mapping
   if (Array.isArray(raw.nodes) && raw.nodes.length > 0) {
     res.nodes = raw.nodes.map((node, idx) => {
-      const cleanId = String(node.id || `node_${idx + 1}`).toLowerCase().trim();
+      const rawId = String(node.id || node.code || `node_${idx + 1}`).trim();
       return {
-        id: cleanId,
-        code: node.code || cleanId.toUpperCase(),
-        name: node.name || `${cleanId.toUpperCase()} Node`,
+        id: rawId,
+        code: node.code || rawId,
+        name: node.name || rawId,
         flag: node.flag || '🌐',
         city: node.city || 'Unknown',
         country: node.country || 'Global',
@@ -310,7 +310,7 @@ function normalizeConfig(raw) {
         coordinates: Array.isArray(node.coordinates) ? node.coordinates : [35.6762, 139.6503],
         status: node.status || 'active',
         isp: node.isp || 'Datacenter',
-        endpointDomain: node.endpoint || node.endpointDomain || `${cleanId}.example.dn42`,
+        endpointDomain: node.endpoint || node.endpointDomain || `${rawId.toLowerCase()}.example.dn42`,
         wgPublicKey: node.wg_pubkey || node.wgPublicKey || 'EXAMPLE_WG_PUBKEY_REPLACE_ME=',
         tunnelIpv4: node.ipv4 || node.tunnelIpv4 || '',
         tunnelIpv6ULA: node.ipv6_ula || node.tunnelIpv6ULA || '',

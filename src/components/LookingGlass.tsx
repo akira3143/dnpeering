@@ -290,13 +290,13 @@ export const LookingGlass: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <CountryFlag
                         flag={node.flag}
-                        code={node.code}
+                        code={node.id}
                         country={node.country}
                         className="w-7 h-5 object-cover rounded-[3px] shadow-md border border-white/10 shrink-0"
                       />
                       <div>
                         <div className="text-xs font-bold font-sans flex items-center gap-1.5">
-                          <span>{node.code}</span>
+                          <span>{node.id}</span>
                           <span className="text-slate-500">&middot;</span>
                           <span className="text-slate-300 font-normal">{node.city}</span>
                         </div>
@@ -481,7 +481,7 @@ export const LookingGlass: React.FC = () => {
               </div>
 
               <div className="text-[11px] font-mono text-slate-300 flex items-center gap-1.5">
-                <span className="text-cyan-400 font-bold">{activeNode.flag} {activeNode.code}</span>
+                <span className="text-cyan-400 font-bold">{activeNode.flag} {activeNode.id}</span>
                 <span className="text-slate-600">:~#</span>
                 <span className="text-slate-400">{historyResults?.command || 'birdc'}</span>
               </div>
@@ -542,7 +542,7 @@ export const LookingGlass: React.FC = () => {
               <div className="flex flex-col items-center justify-center min-h-[220px] text-slate-500 space-y-3">
                 <div className="w-7 h-7 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>
                 <div className="text-xs font-mono text-cyan-300 animate-pulse">
-                  正在与 {activeNode.code} 节点建立 BIRD 控制管道并执行诊断指令...
+                  正在与 {activeNode.id} 节点建立 BIRD 控制管道并执行诊断指令...
                 </div>
               </div>
             ) : historyResults ? (
@@ -569,7 +569,7 @@ export const LookingGlass: React.FC = () => {
           <div className="px-4 py-2 bg-black/40 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500 font-mono">
             <div className="flex items-center gap-2">
               <span className="text-cyan-400">Node:</span>
-              <span className="text-slate-300">{activeNode.code} ({activeNode.city})</span>
+              <span className="text-slate-300">{activeNode.id} ({activeNode.city})</span>
               <span className="text-slate-600">|</span>
               <span className="text-cyan-400">LLA:</span>
               <span className="text-slate-300">{activeNode.tunnelIpv6LLA}</span>

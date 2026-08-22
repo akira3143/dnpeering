@@ -120,7 +120,7 @@ export const PeerPage: React.FC = () => {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-950/50 to-blue-950/30 border border-cyan-500/30 shadow-inner text-xs font-mono">
               <span className="text-cyan-300 font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>{selectedNode.flag} {selectedNode.code}</span>
+                <span>{selectedNode.flag} {selectedNode.id}</span>
               </span>
               <span className="text-slate-600">|</span>
               <span className="text-slate-300 font-sans font-medium">{selectedNode.name}</span>
